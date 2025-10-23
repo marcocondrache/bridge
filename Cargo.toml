@@ -18,3 +18,5 @@ edition = "2024"
 #
 # External crates
 #
+
+gpui = { version = "*", features = ["runtime_shaders"] }
