@@ -15,8 +15,13 @@ edition = "2024"
 # Workspace member crates
 #
 
+workspace = { path = "crates/workspace" }
+
 #
 # External crates
 #
+
+anyhow = "1.0.100"
+uuid = "1.18.1"
 
 gpui = { version = "*", features = ["runtime_shaders"] }
