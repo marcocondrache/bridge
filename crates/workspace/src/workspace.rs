@@ -1,4 +1,5 @@
 mod dock;
+mod item;
 mod pane;
 mod pane_group;
 
@@ -32,24 +33,21 @@ pub struct Workspace {
     center: PaneGroup,
     left_dock: Entity<Dock>,
     bottom_dock: Entity<Dock>,
-    right_dock: Entity<Dock>,
 }
 
 impl Workspace {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let weak_self = cx.entity().downgrade();
 
-        let center_pane = cx.new(|cx| Pane {});
+        let center_pane = cx.new(|cx| Pane::new());
 
         let left_dock = Dock::new(dock::DockPosition::Left, window, cx);
         let bottom_dock = Dock::new(dock::DockPosition::Bottom, window, cx);
-        let right_dock = Dock::new(dock::DockPosition::Right, window, cx);
 
         Self {
             weak_self,
             left_dock,
             bottom_dock,
-            right_dock,
             center: PaneGroup::new(center_pane),
         }
     }
@@ -100,12 +98,6 @@ impl Render for Workspace {
         if self.left_dock.read(cx).is_open() {
             // if let Some(active_panel) = self.left_dock.read(cx).active_panel() {
             //     context.set("left_dock", active_panel.panel_key());
-            // }
-        }
-
-        if self.right_dock.read(cx).is_open() {
-            // if let Some(active_panel) = self.right_dock.read(cx).active_panel() {
-            //     context.set("right_dock", active_panel.panel_key());
             // }
         }
 
@@ -163,8 +155,7 @@ impl Render for Workspace {
                                                     window,
                                                     cx,
                                                 )),
-                                        )
-                                        .children(self.render_dock(&self.right_dock, window, cx)),
+                                        ),
                                 ),
                         ),
                 ),

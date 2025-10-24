@@ -1,6 +1,14 @@
-use gpui::{AppContext, Context, Entity, Render, Window, div};
+use std::sync::Arc;
+
+use gpui::{AppContext, Context, Entity, Focusable, Render, Window, div};
 
 use crate::Workspace;
+
+pub trait Panel: Focusable + Render + Sized {}
+
+pub trait PanelHandle: Send + Sync {}
+
+impl<T> PanelHandle for Entity<T> where T: Panel {}
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum DockPosition {
@@ -11,7 +19,9 @@ pub enum DockPosition {
 
 pub struct Dock {
     position: DockPosition,
+    panel_entries: Vec<Arc<dyn PanelHandle>>,
     is_open: bool,
+    active_panel_index: Option<usize>,
 }
 
 impl Dock {
@@ -22,7 +32,9 @@ impl Dock {
     ) -> Entity<Self> {
         cx.new(|cx| Self {
             position,
+            panel_entries: Vec::new(),
             is_open: false,
+            active_panel_index: None,
         })
     }
 
