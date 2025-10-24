@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use bridge::app_menus;
 use gpui::{Application, AsyncApp};
 use workspace::AppState;
 
@@ -19,6 +20,9 @@ fn main() {
 
         AppState::set_global(Arc::downgrade(&app_state), cx);
 
+        let menus = app_menus(cx);
+
+        cx.set_menus(menus);
         cx.activate(true);
 
         cx.spawn({

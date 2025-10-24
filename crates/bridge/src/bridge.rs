@@ -1,5 +1,9 @@
+mod app_menus;
+
 use gpui::{App, TitlebarOptions, WindowKind, WindowOptions, actions, point, px};
 use uuid::Uuid;
+
+pub use app_menus::*;
 
 actions!(
     bridge,
