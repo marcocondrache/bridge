@@ -3,12 +3,15 @@ mod item;
 mod pane;
 mod pane_group;
 
-use std::sync::{Arc, Weak};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Weak},
+};
 
 use gpui::{
-    App, AppContext, Context, CursorStyle, Div, Entity, Global, InteractiveElement, IntoElement,
-    ParentElement, Render, Styled, Task, WeakEntity, Window, WindowHandle, WindowOptions, div,
-    prelude::FluentBuilder,
+    App, AppContext, Context, CursorStyle, Div, Entity, EntityId, Global, InteractiveElement,
+    IntoElement, ParentElement, Render, Styled, Task, WeakEntity, Window, WindowHandle,
+    WindowOptions, div, prelude::FluentBuilder,
 };
 use uuid::Uuid;
 
@@ -33,22 +36,28 @@ pub struct Workspace {
     center: PaneGroup,
     left_dock: Entity<Dock>,
     bottom_dock: Entity<Dock>,
+    panes: Vec<Entity<Pane>>,
+    panes_by_item: HashMap<EntityId, WeakEntity<Pane>>,
+    active_pane: Entity<Pane>,
 }
 
 impl Workspace {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let weak_self = cx.entity().downgrade();
 
-        let center_pane = cx.new(|cx| Pane::new());
+        let center_pane = cx.new(|cx| Pane::new(weak_self.clone(), cx));
 
-        let left_dock = Dock::new(dock::DockPosition::Left, window, cx);
-        let bottom_dock = Dock::new(dock::DockPosition::Bottom, window, cx);
+        let left_dock = Dock::new(dock::DockPlacement::Left, window, cx);
+        let bottom_dock = Dock::new(dock::DockPlacement::Bottom, window, cx);
 
         Self {
             weak_self,
             left_dock,
             bottom_dock,
-            center: PaneGroup::new(center_pane),
+            center: PaneGroup::new(center_pane.clone()),
+            panes: vec![center_pane.clone()],
+            panes_by_item: Default::default(),
+            active_pane: center_pane,
         }
     }
 
@@ -70,8 +79,14 @@ impl Workspace {
         })
     }
 
-    fn render_dock(&self, dock: &Entity<Dock>, window: &mut Window, cx: &mut App) -> Option<Div> {
-        Some(div())
+    fn render_dock(&self, dock: &Entity<Dock>) -> Option<Div> {
+        Some(
+            div()
+                .flex()
+                .flex_none()
+                .overflow_hidden()
+                .child(dock.clone()),
+        )
     }
 }
 
@@ -131,7 +146,7 @@ impl Render for Workspace {
                                         .flex()
                                         .flex_row()
                                         .h_full()
-                                        .children(self.render_dock(&self.left_dock, window, cx))
+                                        .children(self.render_dock(&self.left_dock))
                                         .child(
                                             div()
                                                 .flex()
@@ -146,11 +161,7 @@ impl Render for Workspace {
                                                         .flex_1()
                                                         .child(self.center.render()),
                                                 )
-                                                .children(self.render_dock(
-                                                    &self.bottom_dock,
-                                                    window,
-                                                    cx,
-                                                )),
+                                                .children(self.render_dock(&self.bottom_dock)),
                                         ),
                                 ),
                         ),
@@ -171,6 +182,7 @@ pub fn client_side_decorations(
     div()
         .map(|div| match decorations {
             gpui::Decorations::Server => div,
+            // TODO: implement
             gpui::Decorations::Client { tiling } => div,
         })
         .size_full()
