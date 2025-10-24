@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use gpui::{Axis, Entity};
+use gpui::{AnyElement, Axis, Element, Entity, div};
 
 use crate::pane::Pane;
 
@@ -26,6 +26,10 @@ impl PaneGroup {
         Self {
             root: Member::Pane(pane),
         }
+    }
+
+    pub fn render(&self) -> AnyElement {
+        self.root.render()
     }
 }
 
@@ -55,6 +59,14 @@ impl Member {
         };
 
         Member::Axis(PaneAxis::new(axis, members))
+    }
+
+    pub fn render(&self) -> AnyElement {
+        match self {
+            Member::Axis(_axis) => div(),
+            Member::Pane(_pane) => div(),
+        }
+        .into_any()
     }
 }
 

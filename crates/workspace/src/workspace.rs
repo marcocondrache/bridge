@@ -95,18 +95,7 @@ impl Render for Workspace {
         window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
-        if self.left_dock.read(cx).is_open() {
-            // if let Some(active_panel) = self.left_dock.read(cx).active_panel() {
-            //     context.set("left_dock", active_panel.panel_key());
-            // }
-        }
-
-        if self.bottom_dock.read(cx).is_open() {
-            // if let Some(active_panel) = self.bottom_dock.read(cx).active_panel() {
-            //     context.set("bottom_dock", active_panel.panel_key());
-            // }
-        }
-
+        // TODO: Extract into separate layers
         client_side_decorations(
             div()
                 .id("root")
@@ -149,7 +138,14 @@ impl Render for Workspace {
                                                 .flex_col()
                                                 .flex_1()
                                                 .overflow_hidden()
-                                                // TODO: center goes here
+                                                .child(
+                                                    div()
+                                                        .flex()
+                                                        .flex_row()
+                                                        .items_center()
+                                                        .flex_1()
+                                                        .child(self.center.render()),
+                                                )
                                                 .children(self.render_dock(
                                                     &self.bottom_dock,
                                                     window,
