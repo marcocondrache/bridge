@@ -11,3 +11,4 @@ path = "src/workspace.rs"
 gpui.workspace = true
 anyhow.workspace = true
 uuid.workspace = true
+parking_lot.workspace = true

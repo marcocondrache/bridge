@@ -22,9 +22,6 @@ pub trait Panel: Focusable + Render + Sized {
     fn size(&self, window: &Window, cx: &App) -> Pixels;
     fn set_size(&mut self, size: Option<Pixels>, window: &mut Window, cx: &mut Context<Self>);
     fn toggle_action(&self) -> Box<dyn Action>;
-    fn icon_label(&self, _window: &Window, _: &App) -> Option<String> {
-        None
-    }
     fn is_zoomed(&self, _window: &Window, _cx: &App) -> bool {
         false
     }
@@ -56,7 +53,6 @@ pub trait PanelHandle: Send + Sync {
     fn size(&self, window: &Window, cx: &App) -> Pixels;
     fn set_size(&self, size: Option<Pixels>, window: &mut Window, cx: &mut App);
     fn toggle_action(&self, window: &Window, cx: &App) -> Box<dyn Action>;
-    fn icon_label(&self, window: &Window, cx: &App) -> Option<String>;
     fn panel_focus_handle(&self, cx: &App) -> FocusHandle;
     fn to_any(&self) -> AnyView;
     fn activation_priority(&self, cx: &App) -> u32;
@@ -128,10 +124,6 @@ where
 
     fn toggle_action(&self, _: &Window, cx: &App) -> Box<dyn Action> {
         self.read(cx).toggle_action()
-    }
-
-    fn icon_label(&self, window: &Window, cx: &App) -> Option<String> {
-        self.read(cx).icon_label(window, cx)
     }
 
     fn to_any(&self) -> AnyView {

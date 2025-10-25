@@ -9,9 +9,9 @@ use std::{
 };
 
 use gpui::{
-    App, AppContext, Context, CursorStyle, Div, Entity, EntityId, Global, InteractiveElement,
-    IntoElement, ParentElement, Render, Styled, Task, WeakEntity, Window, WindowHandle,
-    WindowOptions, div, prelude::FluentBuilder,
+    App, AppContext, Context, CursorStyle, Div, Entity, EntityId, Global, Hsla, InteractiveElement,
+    IntoElement, ParentElement, Render, Stateful, Styled, Task, WeakEntity, Window, WindowHandle,
+    WindowOptions, div, point, prelude::FluentBuilder, px, transparent_black,
 };
 use uuid::Uuid;
 
@@ -69,13 +69,17 @@ impl Workspace {
         let options = (app_state.build_window_options)(None, cx);
 
         cx.spawn(async move |cx| {
-            let handle = cx.open_window(options, {
+            let window = cx.open_window(options, {
                 let _app_state = app_state.clone();
 
                 move |window, cx| cx.new(|cx| Workspace::new(window, cx))
             })?;
 
-            Ok(handle)
+            window.update(cx, |_workspace, window, _cx| {
+                window.activate_window();
+            })?;
+
+            Ok(window)
         })
     }
 
@@ -133,6 +137,7 @@ impl Render for Workspace {
                         .child(
                             div()
                                 .id("workspace")
+                                .bg(gpui::black())
                                 .relative()
                                 .flex_1()
                                 .w_full()
@@ -175,16 +180,67 @@ impl Render for Workspace {
 pub fn client_side_decorations(
     element: impl IntoElement,
     window: &mut Window,
-    cx: &mut App,
-) -> Div {
+    _cx: &mut App,
+) -> Stateful<Div> {
     let decorations = window.window_decorations();
 
     div()
+        .id("window-backdrop")
+        .bg(transparent_black())
         .map(|div| match decorations {
             gpui::Decorations::Server => div,
             // TODO: implement
-            gpui::Decorations::Client { tiling } => div,
+            gpui::Decorations::Client { tiling } => div
+                .when(!(tiling.top || tiling.right), |div| {
+                    div.rounded_tr(px(10.0))
+                })
+                .when(!(tiling.top || tiling.left), |div| div.rounded_tl(px(10.0)))
+                .when(!(tiling.bottom || tiling.right), |div| {
+                    div.rounded_br(px(10.0))
+                })
+                .when(!(tiling.bottom || tiling.left), |div| {
+                    div.rounded_bl(px(10.0))
+                })
+                .when(!tiling.top, |div| div.pt(px(10.0)))
+                .when(!tiling.bottom, |div| div.pb(px(10.0)))
+                .when(!tiling.left, |div| div.pl(px(10.0)))
+                .when(!tiling.right, |div| div.pr(px(10.0))),
         })
         .size_full()
-        .child(div().cursor(CursorStyle::Arrow).child(element))
+        .child(
+            div()
+                .cursor(CursorStyle::Arrow)
+                .map(|div| match decorations {
+                    gpui::Decorations::Server => div,
+                    gpui::Decorations::Client { tiling } => div
+                        .when(!(tiling.top || tiling.right), |div| {
+                            div.rounded_tr(px(10.0))
+                        })
+                        .when(!(tiling.top || tiling.left), |div| div.rounded_tl(px(10.0)))
+                        .when(!(tiling.bottom || tiling.right), |div| {
+                            div.rounded_br(px(10.0))
+                        })
+                        .when(!(tiling.bottom || tiling.left), |div| {
+                            div.rounded_bl(px(10.0))
+                        })
+                        .when(!tiling.top, |div| div.border_t(px(1.0)))
+                        .when(!tiling.bottom, |div| div.border_b(px(1.0)))
+                        .when(!tiling.left, |div| div.border_l(px(1.0)))
+                        .when(!tiling.right, |div| div.border_r(px(1.0)))
+                        .when(!tiling.is_tiled(), |div| {
+                            div.shadow(vec![gpui::BoxShadow {
+                                color: Hsla {
+                                    h: 0.,
+                                    s: 0.,
+                                    l: 0.,
+                                    a: 0.4,
+                                },
+                                blur_radius: px(10.0) / 2.,
+                                spread_radius: px(0.),
+                                offset: point(px(0.0), px(0.0)),
+                            }])
+                        }),
+                })
+                .child(element),
+        )
 }

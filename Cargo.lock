@@ -6515,6 +6515,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "gpui",
+ "parking_lot",
  "uuid",
 ]
 
