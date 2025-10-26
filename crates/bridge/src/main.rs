@@ -22,12 +22,13 @@ fn main() {
 
         theme::init(cx);
 
-        cx.set_menus(app_menus(cx));
+        let menus = app_menus(cx);
+        cx.set_menus(menus);
 
         initialize_workspace(app_state.clone(), cx);
 
         cx.activate(true);
 
-        workspace::open_new(app_state, cx)
+        workspace::open_new(app_state, cx);
     });
 }

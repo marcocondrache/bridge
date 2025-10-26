@@ -56,7 +56,6 @@ impl From<WindowAppearance> for ThemeAppearance {
     }
 }
 
-/// The appearance of the system.
 #[derive(Debug, Clone, Copy, Deref)]
 pub struct SystemAppearance(pub ThemeAppearance);
 
@@ -72,18 +71,15 @@ struct GlobalSystemAppearance(SystemAppearance);
 impl Global for GlobalSystemAppearance {}
 
 impl SystemAppearance {
-    /// Initializes the [`SystemAppearance`] for the application.
     pub fn init(cx: &mut App) {
         *cx.default_global::<GlobalSystemAppearance>() =
             GlobalSystemAppearance(SystemAppearance(cx.window_appearance().into()));
     }
 
-    /// Returns the global [`SystemAppearance`].
     pub fn global(cx: &App) -> Self {
         cx.global::<GlobalSystemAppearance>().0
     }
 
-    /// Returns a mutable reference to the global [`SystemAppearance`].
     pub fn global_mut(cx: &mut App) -> &mut Self {
         cx.global_mut::<GlobalSystemAppearance>()
     }
@@ -130,7 +126,6 @@ impl GlobalTheme {
         cx.refresh_windows();
     }
 
-    /// the active theme
     pub fn theme(cx: &App) -> &Arc<Theme> {
         &cx.global::<Self>().theme
     }

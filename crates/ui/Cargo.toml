@@ -9,3 +9,5 @@ path = "src/ui.rs"
 
 [dependencies]
 gpui.workspace = true
+gpui-macros.workspace = true
+theme.workspace = true

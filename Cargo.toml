@@ -17,6 +17,7 @@ edition = "2024"
 
 workspace = { path = "crates/workspace" }
 theme = { path = "crates/theme" }
+ui = { path = "crates/ui" }
 
 #
 # External crates
@@ -28,3 +29,4 @@ uuid = "1.18.1"
 derive_more = { version = "2.0.1", features = ["full"] }
 
 gpui = { version = "*", features = ["runtime_shaders"] }
+gpui-macros = { version = "*" }
