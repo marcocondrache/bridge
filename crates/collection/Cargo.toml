@@ -1,12 +1,13 @@
 [package]
-name = "bridge"
+name = "collection"
 version = "0.1.0"
 publish.workspace = true
 edition.workspace = true
 
+[lib]
+path = "src/collection.rs"
+
 [dependencies]
-gpui.workspace = true
-uuid.workspace = true
 workspace.workspace = true
-theme.workspace = true
-collection.workspace = true
+gpui.workspace = true
+ui.workspace = true

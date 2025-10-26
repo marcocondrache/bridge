@@ -16,12 +16,18 @@ edition = "2024"
 #
 
 workspace = { path = "crates/workspace" }
+collection = { path = "crates/collection" }
+theme = { path = "crates/theme" }
+ui = { path = "crates/ui" }
 
 #
 # External crates
 #
 
+parking_lot = "0.12"
 anyhow = "1.0.100"
 uuid = "1.18.1"
+derive_more = { version = "2.0.1", features = ["full"] }
 
 gpui = { version = "*", features = ["runtime_shaders"] }
+gpui-macros = { version = "*" }

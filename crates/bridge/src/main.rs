@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
+use bridge::app_menus;
 use gpui::{Application, AsyncApp};
 use workspace::AppState;
 
-use crate::bridge::build_window_options;
+use crate::bridge::{build_window_options, initialize_workspace};
 
 mod bridge;
 
@@ -19,18 +20,15 @@ fn main() {
 
         AppState::set_global(Arc::downgrade(&app_state), cx);
 
+        theme::init(cx);
+
+        let menus = app_menus(cx);
+        cx.set_menus(menus);
+
+        initialize_workspace(app_state.clone(), cx);
+
         cx.activate(true);
 
-        cx.spawn({
-            let app_state = app_state.clone();
-            async move |cx| {
-                restore_or_create_workspace(app_state, cx).await;
-            }
-        })
-        .detach();
+        workspace::open_new(app_state, cx);
     });
-}
-
-async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp) {
-    let _ = cx.update(|cx| workspace::open_new(app_state, cx));
 }

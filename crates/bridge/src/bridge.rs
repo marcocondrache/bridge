@@ -1,49 +1,41 @@
-use gpui::{App, TitlebarOptions, WindowKind, WindowOptions, actions, point, px};
+mod app_menus;
+
+use std::sync::Arc;
+
+use collection::Collection;
+use gpui::{
+    App, AppContext, Context, TitlebarOptions, Window, WindowKind, WindowOptions, actions, point,
+    px,
+};
 use uuid::Uuid;
 
-actions!(
-    bridge,
-    [
-        /// Opens the element inspector for debugging UI.
-        DebugElements,
-        /// Hides the application window.
-        Hide,
-        /// Hides all other application windows.
-        HideOthers,
-        /// Minimizes the current window.
-        Minimize,
-        /// Opens the default settings file.
-        OpenDefaultSettings,
-        /// Opens project-specific settings.
-        OpenProjectSettings,
-        /// Opens the project tasks configuration.
-        OpenProjectTasks,
-        /// Opens the tasks panel.
-        OpenTasks,
-        /// Opens debug tasks configuration.
-        OpenDebugTasks,
-        /// Resets the application database.
-        ResetDatabase,
-        /// Shows all hidden windows.
-        ShowAll,
-        /// Toggles fullscreen mode.
-        ToggleFullScreen,
-        /// Zooms the window.
-        Zoom,
-        /// Triggers a test panic for debugging.
-        TestPanic,
-        /// Triggers a hard crash for debugging.
-        TestCrash,
-    ]
-);
+pub use app_menus::*;
+use workspace::{AppState, Workspace};
 
-pub fn init(cx: &mut App) {
-    #[cfg(target_os = "macos")]
-    cx.on_action(|_: &Hide, cx| cx.hide());
-    #[cfg(target_os = "macos")]
-    cx.on_action(|_: &HideOthers, cx| cx.hide_other_apps());
-    #[cfg(target_os = "macos")]
-    cx.on_action(|_: &ShowAll, cx| cx.unhide_other_apps());
+pub fn init(cx: &mut App) {}
+
+pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
+    cx.observe_new(move |workspace: &mut Workspace, window, cx| {
+        let Some(window) = window else {
+            return;
+        };
+
+        let handle = cx.entity();
+
+        initialize_panels(window, cx);
+    })
+    .detach();
+}
+
+pub fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) {
+    cx.spawn_in(window, async move |handle, cx| {
+        let collection_panel = cx.new(|_| Collection {}).unwrap();
+
+        handle.update_in(cx, |workspace, window, cx| {
+            workspace.add_panel(collection_panel, window, cx);
+        })
+    })
+    .detach();
 }
 
 pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowOptions {
@@ -69,7 +61,7 @@ pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowO
         display_id: display.map(|display| display.id()),
         // window_background: cx.theme().window_background_appearance(),
         // app_id: Some(app_id.to_owned()),
-        window_decorations: Some(gpui::WindowDecorations::Client),
+        window_decorations: Some(gpui::WindowDecorations::Server),
         window_min_size: Some(gpui::Size {
             width: px(360.0),
             height: px(240.0),

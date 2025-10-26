@@ -1,12 +1,12 @@
 [package]
-name = "bridge"
+name = "theme"
 version = "0.1.0"
 publish.workspace = true
 edition.workspace = true
 
+[lib]
+path = "src/theme.rs"
+
 [dependencies]
 gpui.workspace = true
-uuid.workspace = true
-workspace.workspace = true
-theme.workspace = true
-collection.workspace = true
+derive_more.workspace = true
