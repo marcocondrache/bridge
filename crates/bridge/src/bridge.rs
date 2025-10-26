@@ -2,7 +2,11 @@ mod app_menus;
 
 use std::sync::Arc;
 
-use gpui::{App, Context, TitlebarOptions, Window, WindowKind, WindowOptions, actions, point, px};
+use collection::Collection;
+use gpui::{
+    App, AppContext, Context, TitlebarOptions, Window, WindowKind, WindowOptions, actions, point,
+    px,
+};
 use uuid::Uuid;
 
 pub use app_menus::*;
@@ -25,7 +29,11 @@ pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
 
 pub fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) {
     cx.spawn_in(window, async move |handle, cx| {
-        // TODO: add panels
+        let collection_panel = cx.new(|_| Collection {}).unwrap();
+
+        handle.update_in(cx, |workspace, window, cx| {
+            workspace.add_panel(collection_panel, window, cx);
+        })
     })
     .detach();
 }

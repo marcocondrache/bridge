@@ -1,26 +1,32 @@
 use std::{cmp::Ordering, convert::identity, sync::Arc};
 
 use gpui::{
-    AnyView, App, AppContext, Axis, Context, Entity, Focusable, ParentElement, Render,
-    StyleRefinement, Styled, Subscription, WeakEntity, Window, div, prelude::FluentBuilder,
+    AnyView, App, AppContext, Axis, Context, Entity, ParentElement, Render, StyleRefinement,
+    Styled, Subscription, WeakEntity, Window, div, prelude::FluentBuilder,
 };
 use theme::ActiveTheme;
 use ui::{placement::Placement, traits::styled_ext::StyledExt};
 
 use crate::Workspace;
 
-pub trait Panel: Focusable + Render + Sized {
+pub trait Panel: Render + Sized {
     fn priority(&self) -> u32;
+    fn placement(&self) -> Placement;
 }
 
 pub trait PanelHandle: Send + Sync {
     fn priority(&self, cx: &App) -> u32;
+    fn placement(&self, window: &Window, cx: &App) -> Placement;
     fn to_any(&self) -> AnyView;
 }
 
 impl<T: Panel> PanelHandle for Entity<T> {
     fn priority(&self, cx: &App) -> u32 {
         self.read(cx).priority()
+    }
+
+    fn placement(&self, window: &Window, cx: &App) -> Placement {
+        self.read(cx).placement()
     }
 
     fn to_any(&self) -> AnyView {
@@ -53,7 +59,7 @@ impl Dock {
         self.is_open
     }
 
-    pub fn add_panel<T: Panel>(&mut self, panel: Entity<T>, cx: &mut Context<Workspace>) -> usize {
+    pub fn add_panel<T: Panel>(&mut self, panel: Entity<T>, cx: &mut Context<Self>) -> usize {
         let subscription = cx.observe(&panel, |_, _, cx| cx.notify());
 
         let index = self

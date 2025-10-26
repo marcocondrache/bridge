@@ -597,6 +597,7 @@ dependencies = [
 name = "bridge"
 version = "0.1.0"
 dependencies = [
+ "collection",
  "gpui",
  "theme",
  "uuid",
@@ -863,6 +864,15 @@ dependencies = [
  "serde",
  "termcolor",
  "unicode-width",
+]
+
+[[package]]
+name = "collection"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "ui",
+ "workspace",
 ]
 
 [[package]]

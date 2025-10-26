@@ -16,6 +16,7 @@ edition = "2024"
 #
 
 workspace = { path = "crates/workspace" }
+collection = { path = "crates/collection" }
 theme = { path = "crates/theme" }
 ui = { path = "crates/ui" }
 

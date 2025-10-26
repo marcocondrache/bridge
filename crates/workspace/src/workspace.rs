@@ -1,6 +1,6 @@
-mod area;
-mod dock;
-mod item;
+pub mod area;
+pub mod dock;
+pub mod item;
 
 use std::sync::{Arc, Weak};
 
@@ -14,7 +14,10 @@ use theme::{ActiveTheme, GlobalTheme, SystemAppearance};
 use ui::{components::root::root, placement::Placement};
 use uuid::Uuid;
 
-use crate::{area::Area, dock::Dock};
+use crate::{
+    area::Area,
+    dock::{Dock, Panel, PanelHandle},
+};
 
 pub struct AppState {
     pub build_window_options: fn(Option<Uuid>, &mut App) -> WindowOptions,
@@ -63,6 +66,20 @@ impl Workspace {
         }
     }
 
+    pub fn add_panel<T: Panel>(
+        &mut self,
+        panel: Entity<T>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let placement = panel.placement(window, cx);
+        let dock = self.dock_at_placement(placement);
+
+        dock.update(cx, |dock, cx| {
+            dock.add_panel(panel, cx);
+        })
+    }
+
     pub fn spawn(
         app_state: Arc<AppState>,
         _requesting_window: Option<WindowHandle<Workspace>>,
@@ -83,6 +100,14 @@ impl Workspace {
 
             Ok(window)
         })
+    }
+
+    fn dock_at_placement(&self, placement: Placement) -> &Entity<Dock> {
+        match placement {
+            Placement::Left => &self.left_dock,
+            Placement::Bottom => &self.bottom_dock,
+            _ => &self.left_dock,
+        }
     }
 
     fn render_dock(&self, dock: &Entity<Dock>) -> Option<Div> {
