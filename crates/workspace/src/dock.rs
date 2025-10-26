@@ -168,8 +168,8 @@ impl DockPlacement {
 pub struct Dock {
     placement: DockPlacement,
     panel_entries: Vec<Arc<dyn PanelHandle>>,
-    is_open: bool,
     active_panel_index: Option<usize>,
+    is_open: bool,
 }
 
 impl Dock {
@@ -180,8 +180,8 @@ impl Dock {
     ) -> Entity<Self> {
         cx.new(|cx| Self {
             placement,
-            panel_entries: Vec::new(),
             is_open: false,
+            panel_entries: Vec::new(),
             active_panel_index: None,
         })
     }

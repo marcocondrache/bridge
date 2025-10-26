@@ -16,6 +16,7 @@ edition = "2024"
 #
 
 workspace = { path = "crates/workspace" }
+theme = { path = "crates/theme" }
 
 #
 # External crates
@@ -24,5 +25,6 @@ workspace = { path = "crates/workspace" }
 parking_lot = "0.12"
 anyhow = "1.0.100"
 uuid = "1.18.1"
+derive_more = { version = "2.0.1", features = ["full"] }
 
 gpui = { version = "*", features = ["runtime_shaders"] }

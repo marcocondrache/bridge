@@ -20,6 +20,8 @@ fn main() {
 
         AppState::set_global(Arc::downgrade(&app_state), cx);
 
+        theme::init(cx);
+
         let menus = app_menus(cx);
 
         cx.set_menus(menus);
