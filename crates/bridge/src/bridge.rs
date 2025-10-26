@@ -1,9 +1,12 @@
 mod app_menus;
 
-use gpui::{App, TitlebarOptions, WindowKind, WindowOptions, actions, point, px};
+use std::sync::Arc;
+
+use gpui::{App, Context, TitlebarOptions, Window, WindowKind, WindowOptions, actions, point, px};
 use uuid::Uuid;
 
 pub use app_menus::*;
+use workspace::{AppState, Workspace};
 
 actions!(
     bridge,
@@ -48,6 +51,26 @@ pub fn init(cx: &mut App) {
     cx.on_action(|_: &HideOthers, cx| cx.hide_other_apps());
     #[cfg(target_os = "macos")]
     cx.on_action(|_: &ShowAll, cx| cx.unhide_other_apps());
+}
+
+pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
+    cx.observe_new(move |workspace: &mut Workspace, window, cx| {
+        let Some(window) = window else {
+            return;
+        };
+
+        let handle = cx.entity();
+
+        initialize_panels(window, cx);
+    })
+    .detach();
+}
+
+pub fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) {
+    cx.spawn_in(window, async move |handle, cx| {
+        // TODO: add panels
+    })
+    .detach();
 }
 
 pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowOptions {

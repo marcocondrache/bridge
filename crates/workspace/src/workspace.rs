@@ -9,9 +9,9 @@ use std::{
 };
 
 use gpui::{
-    App, AppContext, Context, CursorStyle, Div, Entity, EntityId, Global, Hsla, InteractiveElement,
-    IntoElement, ParentElement, Render, Stateful, Styled, Subscription, Task, WeakEntity, Window,
-    WindowHandle, WindowOptions, div, point, prelude::FluentBuilder, px, transparent_black,
+    App, AppContext, Context, Div, Entity, EntityId, Global, InteractiveElement, IntoElement,
+    ParentElement, Render, Stateful, Styled, Subscription, Task, WeakEntity, Window, WindowHandle,
+    WindowOptions, div,
 };
 use theme::{ActiveTheme, GlobalTheme, SystemAppearance};
 use uuid::Uuid;

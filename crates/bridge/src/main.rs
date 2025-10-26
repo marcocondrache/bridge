@@ -4,7 +4,7 @@ use bridge::app_menus;
 use gpui::{Application, AsyncApp};
 use workspace::AppState;
 
-use crate::bridge::build_window_options;
+use crate::bridge::{build_window_options, initialize_workspace};
 
 mod bridge;
 
@@ -23,8 +23,10 @@ fn main() {
         theme::init(cx);
 
         let menus = app_menus(cx);
-
         cx.set_menus(menus);
+
+        initialize_workspace(app_state.clone(), cx);
+
         cx.activate(true);
 
         cx.spawn({
