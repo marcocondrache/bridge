@@ -8,50 +8,7 @@ use uuid::Uuid;
 pub use app_menus::*;
 use workspace::{AppState, Workspace};
 
-actions!(
-    bridge,
-    [
-        /// Opens the element inspector for debugging UI.
-        DebugElements,
-        /// Hides the application window.
-        Hide,
-        /// Hides all other application windows.
-        HideOthers,
-        /// Minimizes the current window.
-        Minimize,
-        /// Opens the default settings file.
-        OpenDefaultSettings,
-        /// Opens project-specific settings.
-        OpenProjectSettings,
-        /// Opens the project tasks configuration.
-        OpenProjectTasks,
-        /// Opens the tasks panel.
-        OpenTasks,
-        /// Opens debug tasks configuration.
-        OpenDebugTasks,
-        /// Resets the application database.
-        ResetDatabase,
-        /// Shows all hidden windows.
-        ShowAll,
-        /// Toggles fullscreen mode.
-        ToggleFullScreen,
-        /// Zooms the window.
-        Zoom,
-        /// Triggers a test panic for debugging.
-        TestPanic,
-        /// Triggers a hard crash for debugging.
-        TestCrash,
-    ]
-);
-
-pub fn init(cx: &mut App) {
-    #[cfg(target_os = "macos")]
-    cx.on_action(|_: &Hide, cx| cx.hide());
-    #[cfg(target_os = "macos")]
-    cx.on_action(|_: &HideOthers, cx| cx.hide_other_apps());
-    #[cfg(target_os = "macos")]
-    cx.on_action(|_: &ShowAll, cx| cx.unhide_other_apps());
-}
+pub fn init(cx: &mut App) {}
 
 pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
     cx.observe_new(move |workspace: &mut Workspace, window, cx| {

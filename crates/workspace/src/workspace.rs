@@ -1,8 +1,3 @@
-mod dock;
-mod item;
-mod pane;
-mod pane_group;
-
 use std::{
     collections::HashMap,
     sync::{Arc, Weak},
@@ -10,13 +5,11 @@ use std::{
 
 use gpui::{
     App, AppContext, Context, Div, Entity, EntityId, Global, InteractiveElement, IntoElement,
-    ParentElement, Render, Stateful, Styled, Subscription, Task, WeakEntity, Window, WindowHandle,
+    ParentElement, Render, Styled, Subscription, Task, WeakEntity, Window, WindowHandle,
     WindowOptions, div,
 };
 use theme::{ActiveTheme, GlobalTheme, SystemAppearance};
 use uuid::Uuid;
-
-use crate::{dock::Dock, pane::Pane, pane_group::PaneGroup};
 
 pub struct AppState {
     pub build_window_options: fn(Option<Uuid>, &mut App) -> WindowOptions,
@@ -187,12 +180,4 @@ impl Render for Workspace {
                     ),
             )
     }
-}
-
-pub fn client_side_decorations(
-    element: impl IntoElement,
-    window: &mut Window,
-    _cx: &mut App,
-) -> Stateful<Div> {
-    todo!("Client side decorations are not implemented yet")
 }
