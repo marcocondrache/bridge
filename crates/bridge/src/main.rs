@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use bridge::app_menus;
-use gpui::{Application, AsyncApp};
+use gpui::Application;
 use workspace::AppState;
 
 use crate::bridge::{build_window_options, initialize_workspace};

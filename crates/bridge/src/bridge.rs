@@ -4,8 +4,7 @@ use std::sync::Arc;
 
 use collection::Collection;
 use gpui::{
-    App, AppContext, Context, TitlebarOptions, Window, WindowKind, WindowOptions, actions, point,
-    px,
+    App, AppContext, Context, TitlebarOptions, Window, WindowKind, WindowOptions, point, px,
 };
 use uuid::Uuid;
 
