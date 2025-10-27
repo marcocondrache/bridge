@@ -10,3 +10,4 @@ uuid.workspace = true
 workspace.workspace = true
 theme.workspace = true
 collection.workspace = true
+settings.workspace = true

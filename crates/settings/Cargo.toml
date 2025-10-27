@@ -1,0 +1,16 @@
+[package]
+name = "settings"
+version = "0.1.0"
+publish.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/settings.rs"
+
+[dependencies]
+gpui.workspace = true
+config.workspace = true
+serde.workspace = true
+anyhow.workspace = true
+rust-embed.workspace = true
+util.workspace = true

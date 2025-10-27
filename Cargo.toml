@@ -15,10 +15,12 @@ edition = "2024"
 # Workspace member crates
 #
 
+util = { path = "crates/util" }
 workspace = { path = "crates/workspace" }
 collection = { path = "crates/collection" }
 theme = { path = "crates/theme" }
 ui = { path = "crates/ui" }
+settings = { path = "crates/settings" }
 
 #
 # External crates
@@ -27,7 +29,10 @@ ui = { path = "crates/ui" }
 parking_lot = "0.12"
 anyhow = "1.0.100"
 uuid = "1.18.1"
+rust-embed = "8.8.0"
 derive_more = { version = "2.0.1", features = ["full"] }
+config = { version = "0.15.18", default-features = false, features = ["async", "json5", "convert-case"] }
+serde = { version = "1.0.228", features = ["derive"] }
 
 gpui = { version = "*", features = ["runtime_shaders"] }
 gpui-macros = { version = "*" }
