@@ -20,6 +20,7 @@ workspace = { path = "crates/workspace" }
 collection = { path = "crates/collection" }
 theme = { path = "crates/theme" }
 ui = { path = "crates/ui" }
+settings = { path = "crates/settings" }
 
 #
 # External crates

@@ -12,6 +12,8 @@ fn main() {
     let app = Application::new();
 
     app.run(|cx| {
+        settings::init(cx);
+
         bridge::init(cx);
 
         let app_state = Arc::new(AppState {
