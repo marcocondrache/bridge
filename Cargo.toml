@@ -21,6 +21,7 @@ collection = { path = "crates/collection" }
 theme = { path = "crates/theme" }
 ui = { path = "crates/ui" }
 settings = { path = "crates/settings" }
+http_ui = { path = "crates/http_ui" }
 
 #
 # External crates

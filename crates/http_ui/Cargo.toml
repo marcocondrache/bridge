@@ -1,0 +1,17 @@
+[package]
+name = "http_ui"
+version = "0.1.0"
+publish.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/http_ui.rs"
+
+[dependencies]
+gpui.workspace = true
+gpui-macros.workspace = true
+ui.workspace = true
+theme.workspace = true
+workspace.workspace = true
+serde.workspace = true
+anyhow.workspace = true
