@@ -11,3 +11,4 @@ path = "src/ui.rs"
 gpui.workspace = true
 gpui-macros.workspace = true
 theme.workspace = true
+smallvec.workspace = true
