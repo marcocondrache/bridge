@@ -10,6 +10,9 @@ use crate::settings_store::SettingsStore;
 mod settings_content;
 mod settings_store;
 
+pub use settings_content::SettingsContent;
+pub use settings_store::Settings;
+
 pub fn init(cx: &mut App) {
     let builder = ConfigBuilder::<AsyncState>::default().add_source(config::File::from_str(
         &default_settings(),
