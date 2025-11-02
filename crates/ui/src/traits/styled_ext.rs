@@ -1,4 +1,4 @@
-use gpui::Styled;
+use gpui::{Refineable, StyleRefinement, Styled};
 
 #[cfg_attr(debug_assertions, gpui_macros::derive_inspector_reflection)]
 pub trait StyledExt: Styled + Sized {

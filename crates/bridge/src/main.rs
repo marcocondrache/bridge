@@ -12,6 +12,7 @@ fn main() {
     let app = Application::new();
 
     app.run(|cx| {
+        http_client::init(cx);
         settings::init(cx);
 
         bridge::init(cx);
