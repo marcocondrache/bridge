@@ -3,7 +3,7 @@ use gpui::{
     Window, div, prelude::FluentBuilder,
 };
 use gpui_component::{
-    Sizable, StyledExt,
+    ActiveTheme, Sizable, StyledExt,
     tab::{Tab, TabBar},
     v_flex,
 };
@@ -35,6 +35,21 @@ impl Area {
         self.items.get(self.current)
     }
 
+    pub fn focus_active_item(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(active_item) = self.active_item() {
+            window.focus(&active_item.focus_handle(cx));
+        }
+    }
+
+    pub fn activate_item(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
+        if index < self.items.len() {
+            self.current = index;
+            self.focus_active_item(window, cx);
+
+            cx.notify();
+        }
+    }
+
     pub fn add_item(
         &mut self,
         item: Box<dyn ItemHandle>,
@@ -42,6 +57,7 @@ impl Area {
         cx: &mut Context<Self>,
     ) {
         self.items.push(item);
+
         cx.notify();
     }
 }
@@ -52,6 +68,8 @@ impl Render for Area {
         window: &mut gpui::Window,
         cx: &mut Context<Self>,
     ) -> impl gpui::IntoElement {
+        let theme = cx.theme();
+
         v_flex()
             .id("area")
             .key_context("area")
@@ -73,8 +91,8 @@ impl Render for Area {
                             .size_full()
                             .items_center()
                             .justify_center()
-                            .text_color(gpui::rgb(0x808080))
-                            .child("No items open. Press Cmd+N to create a new HTTP request.")
+                            .text_color(theme.secondary_foreground)
+                            .child("Create a new HTTP request")
                     }
                 })
             })

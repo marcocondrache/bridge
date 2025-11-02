@@ -16,10 +16,10 @@ use uuid::Uuid;
 use crate::{
     area::Area,
     dock::{Dock, Panel, PanelHandle},
-    item::{Item, ItemHandle},
+    item::ItemHandle,
 };
 
-actions!(workspace, [NewHttpEditor]);
+actions!(workspace, [NewHttpEditor, NewWindow]);
 
 pub struct AppState {
     pub build_window_options: fn(Option<Uuid>, &mut App) -> WindowOptions,
@@ -30,6 +30,15 @@ struct GlobalAppState(Weak<AppState>);
 impl Global for GlobalAppState {}
 
 impl AppState {
+    pub fn global(cx: &App) -> Weak<Self> {
+        cx.global::<GlobalAppState>().0.clone()
+    }
+
+    pub fn try_global(cx: &App) -> Option<Weak<Self>> {
+        cx.try_global::<GlobalAppState>()
+            .map(|state| state.0.clone())
+    }
+
     pub fn set_global(state: Weak<AppState>, cx: &mut App) {
         cx.set_global(GlobalAppState(state));
     }
@@ -184,7 +193,6 @@ impl Render for Workspace {
         context.add("workspace");
         context.set("keyboard_layout", cx.keyboard_layout().name().to_string());
 
-        // TODO: Extract into separate layers
         self.actions(div(), window, cx)
             .key_context(context)
             .id("root")
