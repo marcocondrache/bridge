@@ -30,6 +30,7 @@ mime.workspace = true
 encoding_rs.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+gpui.workspace = true
 
 tracing = { version = "0.1.17", features = ["log"] }
 tracing-futures = { version = "0.2", default-features = false, features = ["std", "std-future"] }

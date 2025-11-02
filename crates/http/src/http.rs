@@ -25,6 +25,8 @@ pub mod error;
 
 pub mod interceptor;
 
+use gpui::{App, Global};
+
 pub use crate::{
     body::{AsyncBody, Body},
     client::{HttpClient, HttpClientBuilder, ResponseFuture},
@@ -51,4 +53,20 @@ pub mod prelude {
     pub use crate::{
         AsyncReadResponseExt, ReadResponseExt, RequestExt, ResponseExt, config::Configurable,
     };
+}
+
+pub fn init(cx: &mut App) {
+    let client = HttpClientBuilder::default().build().unwrap();
+
+    cx.set_global(GlobalHttpClient(client));
+}
+
+pub struct GlobalHttpClient(HttpClient);
+
+impl Global for GlobalHttpClient {}
+
+impl HttpClient {
+    pub fn global(cx: &App) -> Self {
+        cx.global::<GlobalHttpClient>().0.clone()
+    }
 }
