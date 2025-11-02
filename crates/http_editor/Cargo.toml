@@ -1,11 +1,11 @@
 [package]
-name = "http_ui"
+name = "http_editor"
 version = "0.1.0"
 publish.workspace = true
 edition.workspace = true
 
 [lib]
-path = "src/http_ui.rs"
+path = "src/http_editor.rs"
 
 [dependencies]
 gpui.workspace = true
@@ -14,3 +14,4 @@ gpui-component.workspace = true
 serde.workspace = true
 anyhow.workspace = true
 workspace.workspace = true
+http_client.workspace = true

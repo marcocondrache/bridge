@@ -642,7 +642,7 @@ dependencies = [
  "gpui",
  "gpui-component",
  "http_client",
- "http_ui",
+ "http_editor",
  "settings",
  "title_bar",
  "uuid",
@@ -2741,13 +2741,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "http_ui"
+name = "http_editor"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "gpui",
  "gpui-component",
  "gpui-macros",
+ "http_client",
  "serde",
  "workspace",
 ]

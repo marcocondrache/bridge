@@ -23,6 +23,8 @@ pub mod auth;
 pub mod config;
 pub mod error;
 
+pub use http::*;
+
 pub mod interceptor;
 
 use gpui::{App, Global};

@@ -1,4 +1,4 @@
-use gpui::{AppContext, Context, Entity, IntoElement, Render, Window};
+use gpui::{App, AppContext, Context, Entity, IntoElement, Render, Window};
 use gpui_component::{
     Sizable,
     input::{InputState, TextInput},
@@ -13,6 +13,10 @@ impl HttpTarget {
         let state = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
 
         Self { state }
+    }
+
+    pub fn url(&self, cx: &App) -> String {
+        self.state.read(cx).value().to_string()
     }
 }
 

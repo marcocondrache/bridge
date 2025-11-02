@@ -4,11 +4,12 @@ use gpui::{
 };
 use gpui_component::{
     ActiveTheme, Sizable, StyledExt,
+    button::Button,
     tab::{Tab, TabBar},
     v_flex,
 };
 
-use crate::{Workspace, item::ItemHandle};
+use crate::{NewHttpEditor, Workspace, item::ItemHandle};
 
 pub struct Area {
     workspace: WeakEntity<Workspace>,
@@ -93,6 +94,9 @@ impl Render for Area {
                             .justify_center()
                             .text_color(theme.secondary_foreground)
                             .child("Create a new HTTP request")
+                            .child(Button::new("test").on_click(|_, window, cx| {
+                                window.dispatch_action(Box::new(NewHttpEditor), cx);
+                            }))
                     }
                 })
             })

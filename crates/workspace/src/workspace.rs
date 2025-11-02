@@ -45,7 +45,6 @@ impl AppState {
 }
 
 pub struct Workspace {
-    weak_self: WeakEntity<Self>,
     right_dock: Entity<Dock>,
     bottom_dock: Entity<Dock>,
     center: Entity<Area>,
@@ -56,8 +55,6 @@ pub struct Workspace {
 
 impl Workspace {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let weak_self = cx.entity().downgrade();
-
         let right_dock = Dock::new(Placement::Right, cx);
         let bottom_dock = Dock::new(Placement::Bottom, cx);
         let center = Area::new(window, cx);
@@ -65,7 +62,6 @@ impl Workspace {
         let subscriptions = vec![];
 
         Self {
-            weak_self,
             right_dock,
             bottom_dock,
             center,
@@ -188,13 +184,8 @@ impl Render for Workspace {
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
         let theme = cx.theme().clone();
-        let mut context = KeyContext::new_with_defaults();
-
-        context.add("workspace");
-        context.set("keyboard_layout", cx.keyboard_layout().name().to_string());
 
         self.actions(div(), window, cx)
-            .key_context(context)
             .id("root")
             .relative()
             .size_full()

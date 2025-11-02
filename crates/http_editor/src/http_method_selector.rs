@@ -20,6 +20,10 @@ impl HttpMethodSelector {
         }
     }
 
+    pub fn method(&self) -> http::Method {
+        self.method.clone()
+    }
+
     fn get(&mut self, _: &Get, _window: &mut Window, cx: &mut Context<Self>) {
         self.method = Method::GET;
         cx.notify();
