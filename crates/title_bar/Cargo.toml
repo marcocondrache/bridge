@@ -1,15 +1,13 @@
 [package]
-name = "workspace"
+name = "title_bar"
 version = "0.1.0"
 publish.workspace = true
 edition.workspace = true
 
 [lib]
-path = "src/workspace.rs"
+path = "src/title_bar.rs"
 
 [dependencies]
 gpui.workspace = true
 gpui-component.workspace = true
-anyhow.workspace = true
-uuid.workspace = true
-parking_lot.workspace = true
+workspace.workspace = true

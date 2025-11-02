@@ -19,6 +19,8 @@ fn main() {
 
         bridge::init(cx);
 
+        title_bar::init(cx);
+
         let app_state = Arc::new(AppState {
             build_window_options,
         });

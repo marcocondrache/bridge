@@ -13,3 +13,4 @@ gpui-macros.workspace = true
 gpui-component.workspace = true
 serde.workspace = true
 anyhow.workspace = true
+workspace.workspace = true

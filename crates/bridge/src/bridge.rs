@@ -6,6 +6,7 @@ use collection::Collection;
 use gpui::{
     App, AppContext, Context, TitlebarOptions, Window, WindowKind, WindowOptions, point, px,
 };
+use http_ui::http_editor::HttpEditor;
 use uuid::Uuid;
 
 pub use app_menus::*;
@@ -19,9 +20,8 @@ pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
             return;
         };
 
-        let handle = cx.entity();
-
         initialize_panels(window, cx);
+        register_actions(state.clone(), workspace, window, cx);
     })
     .detach();
 }
@@ -35,6 +35,21 @@ pub fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) {
         })
     })
     .detach();
+}
+
+pub fn register_actions(
+    app_state: Arc<AppState>,
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    workspace.register_action(
+        |workspace: &mut Workspace, _: &workspace::NewHttpEditor, window, cx| {
+            let item = Box::new(cx.new(|cx| HttpEditor::new(window, cx)));
+
+            workspace.add_item(item, window, cx);
+        },
+    );
 }
 
 pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowOptions {

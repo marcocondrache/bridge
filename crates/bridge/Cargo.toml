@@ -12,3 +12,5 @@ workspace.workspace = true
 collection.workspace = true
 settings.workspace = true
 http_client.workspace = true
+http_ui.workspace = true
+title_bar.workspace = true

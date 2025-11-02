@@ -642,7 +642,9 @@ dependencies = [
  "gpui",
  "gpui-component",
  "http_client",
+ "http_ui",
  "settings",
+ "title_bar",
  "uuid",
  "workspace",
 ]
@@ -2747,6 +2749,7 @@ dependencies = [
  "gpui-component",
  "gpui-macros",
  "serde",
+ "workspace",
 ]
 
 [[package]]
@@ -6214,6 +6217,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
+name = "title_bar"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "gpui-component",
+ "workspace",
+]
+
+[[package]]
 name = "tokio"
 version = "1.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7599,7 +7611,6 @@ dependencies = [
  "anyhow",
  "gpui",
  "gpui-component",
- "http_ui",
  "parking_lot",
  "uuid",
 ]

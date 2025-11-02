@@ -6,8 +6,9 @@ use std::sync::{Arc, Weak};
 
 use anyhow::Ok;
 use gpui::{
-    App, AppContext, Context, Div, Entity, Global, InteractiveElement, ParentElement, Render,
-    Styled, Subscription, Task, WeakEntity, Window, WindowHandle, WindowOptions, div,
+    Action, AnyView, App, AppContext, Context, Div, Entity, Global, InteractiveElement, KeyContext,
+    ParentElement, Render, Styled, Subscription, Task, WeakEntity, Window, WindowHandle,
+    WindowOptions, actions, div,
 };
 use gpui_component::{ActiveTheme, Placement, Root};
 use uuid::Uuid;
@@ -15,7 +16,10 @@ use uuid::Uuid;
 use crate::{
     area::Area,
     dock::{Dock, Panel, PanelHandle},
+    item::{Item, ItemHandle},
 };
+
+actions!(workspace, [NewHttpEditor]);
 
 pub struct AppState {
     pub build_window_options: fn(Option<Uuid>, &mut App) -> WindowOptions,
@@ -36,6 +40,8 @@ pub struct Workspace {
     right_dock: Entity<Dock>,
     bottom_dock: Entity<Dock>,
     center: Entity<Area>,
+    titlebar_item: Option<AnyView>,
+    actions: Vec<Box<dyn Fn(Div, &Workspace, &mut Window, &mut Context<Self>) -> Div>>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -45,7 +51,7 @@ impl Workspace {
 
         let right_dock = Dock::new(Placement::Right, cx);
         let bottom_dock = Dock::new(Placement::Bottom, cx);
-        let center = Area::new(cx);
+        let center = Area::new(window, cx);
 
         let subscriptions = vec![];
 
@@ -54,6 +60,8 @@ impl Workspace {
             right_dock,
             bottom_dock,
             center,
+            actions: Default::default(),
+            titlebar_item: None,
             _subscriptions: subscriptions,
         }
     }
@@ -70,6 +78,39 @@ impl Workspace {
         dock.update(cx, |dock, cx| {
             dock.add_panel(panel, cx);
         })
+    }
+
+    pub fn add_item(
+        &mut self,
+        item: Box<dyn ItemHandle>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.center.update(cx, |area, cx| {
+            area.add_item(item, window, cx);
+        });
+    }
+
+    pub fn register_action<A: Action>(
+        &mut self,
+        callback: impl Fn(&mut Self, &A, &mut Window, &mut Context<Self>) + 'static,
+    ) -> &mut Self {
+        let callback = Arc::new(callback);
+
+        self.actions.push(Box::new(move |div, _, _, cx| {
+            let callback = callback.clone();
+
+            div.on_action(cx.listener(move |workspace, event, window, cx| {
+                (callback)(workspace, event, window, cx)
+            }))
+        }));
+
+        self
+    }
+
+    pub fn set_titlebar_item(&mut self, item: AnyView, _: &mut Window, cx: &mut Context<Self>) {
+        self.titlebar_item = Some(item);
+        cx.notify();
     }
 
     pub fn spawn(
@@ -95,6 +136,12 @@ impl Workspace {
 
             Ok(window)
         })
+    }
+
+    fn actions(&self, div: Div, window: &mut Window, cx: &mut Context<Self>) -> Div {
+        self.actions
+            .iter()
+            .fold(div, |div, action| (action)(div, self, window, cx))
     }
 
     fn dock_at_placement(&self, placement: Placement) -> &Entity<Dock> {
@@ -128,15 +175,19 @@ pub fn open_new(app_state: Arc<AppState>, cx: &mut App) {
 impl Render for Workspace {
     fn render(
         &mut self,
-        _window: &mut gpui::Window,
+        window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
         let theme = cx.theme().clone();
+        let mut context = KeyContext::new_with_defaults();
+
+        context.add("workspace");
+        context.set("keyboard_layout", cx.keyboard_layout().name().to_string());
 
         // TODO: Extract into separate layers
-        div()
+        self.actions(div(), window, cx)
+            .key_context(context)
             .id("root")
-            .key_context("root")
             .relative()
             .size_full()
             .flex()
@@ -145,6 +196,7 @@ impl Render for Workspace {
             .items_start()
             .text_color(theme.foreground)
             .overflow_hidden()
+            .children(self.titlebar_item.clone())
             .child(
                 div()
                     .id("workspace")
