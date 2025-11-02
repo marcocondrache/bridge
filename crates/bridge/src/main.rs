@@ -12,6 +12,8 @@ fn main() {
     let app = Application::new();
 
     app.run(|cx| {
+        gpui_component::init(cx);
+
         http_client::init(cx);
         settings::init(cx);
 
@@ -22,8 +24,6 @@ fn main() {
         });
 
         AppState::set_global(Arc::downgrade(&app_state), cx);
-
-        theme::init(cx);
 
         let menus = app_menus(cx);
         cx.set_menus(menus);

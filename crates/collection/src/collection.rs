@@ -1,4 +1,5 @@
 use gpui::{Render, div};
+use gpui_component::Placement;
 use workspace::dock::Panel;
 
 pub struct Collection {}
@@ -8,8 +9,8 @@ impl Panel for Collection {
         0
     }
 
-    fn placement(&self) -> ui::placement::Placement {
-        ui::placement::Placement::Left
+    fn placement(&self) -> Placement {
+        Placement::Left
     }
 }
 

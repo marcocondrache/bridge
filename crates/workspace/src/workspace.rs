@@ -9,9 +9,7 @@ use gpui::{
     App, AppContext, Context, Div, Entity, Global, InteractiveElement, ParentElement, Render,
     Styled, Subscription, Task, WeakEntity, Window, WindowHandle, WindowOptions, div,
 };
-use theme::{ActiveTheme, GlobalTheme, SystemAppearance};
-
-use ui::{components::root::root, placement::Placement};
+use gpui_component::{ActiveTheme, Placement, Root};
 use uuid::Uuid;
 
 use crate::{
@@ -35,7 +33,7 @@ impl AppState {
 
 pub struct Workspace {
     weak_self: WeakEntity<Self>,
-    left_dock: Entity<Dock>,
+    right_dock: Entity<Dock>,
     bottom_dock: Entity<Dock>,
     center: Entity<Area>,
     _subscriptions: Vec<Subscription>,
@@ -45,21 +43,15 @@ impl Workspace {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let weak_self = cx.entity().downgrade();
 
-        let left_dock = Dock::new(Placement::Left, cx);
+        let right_dock = Dock::new(Placement::Right, cx);
         let bottom_dock = Dock::new(Placement::Bottom, cx);
         let center = Area::new(cx);
 
-        let subscriptions = vec![cx.observe_window_appearance(window, |_, window, cx| {
-            let window_appearance = window.appearance();
-
-            *SystemAppearance::global_mut(cx) = SystemAppearance(window_appearance.into());
-
-            GlobalTheme::reload_theme(cx);
-        })];
+        let subscriptions = vec![];
 
         Self {
             weak_self,
-            left_dock,
+            right_dock,
             bottom_dock,
             center,
             _subscriptions: subscriptions,
@@ -82,16 +74,19 @@ impl Workspace {
 
     pub fn spawn(
         app_state: Arc<AppState>,
-        _requesting_window: Option<WindowHandle<Workspace>>,
         cx: &mut App,
-    ) -> Task<anyhow::Result<WindowHandle<Workspace>>> {
+    ) -> Task<anyhow::Result<WindowHandle<Root>>> {
         let options = (app_state.build_window_options)(None, cx);
 
         cx.spawn(async move |cx| {
             let window = cx.open_window(options, {
                 let _app_state = app_state.clone();
 
-                move |window, cx| cx.new(|cx| Workspace::new(window, cx))
+                move |window, cx| {
+                    let workspace = cx.new(|cx| Workspace::new(window, cx));
+
+                    cx.new(|cx| Root::new(workspace.into(), window, cx))
+                }
             })?;
 
             window.update(cx, |_workspace, window, _cx| {
@@ -104,9 +99,9 @@ impl Workspace {
 
     fn dock_at_placement(&self, placement: Placement) -> &Entity<Dock> {
         match placement {
-            Placement::Left => &self.left_dock,
+            Placement::Right => &self.right_dock,
             Placement::Bottom => &self.bottom_dock,
-            _ => &self.left_dock,
+            _ => &self.right_dock,
         }
     }
 
@@ -122,7 +117,7 @@ impl Workspace {
 }
 
 pub fn open_new(app_state: Arc<AppState>, cx: &mut App) {
-    let task = Workspace::spawn(app_state, None, cx);
+    let task = Workspace::spawn(app_state, cx);
 
     cx.spawn(async move |_| {
         let _ = task.await;
@@ -137,46 +132,55 @@ impl Render for Workspace {
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
         let theme = cx.theme().clone();
-        let colors = theme.colors();
 
         // TODO: Extract into separate layers
-        root(
-            div()
-                .id("workspace")
-                .bg(colors.background)
-                .relative()
-                .flex_1()
-                .w_full()
-                .flex()
-                .flex_col()
-                .overflow_hidden()
-                .border_t_1()
-                .border_b_1()
-                .border_color(colors.border)
-                .child(
-                    div()
-                        .flex()
-                        .flex_row()
-                        .h_full()
-                        .children(self.render_dock(&self.left_dock))
-                        .child(
-                            div()
-                                .flex()
-                                .flex_col()
-                                .flex_1()
-                                .overflow_hidden()
-                                .child(
-                                    div()
-                                        .flex()
-                                        .flex_row()
-                                        .items_center()
-                                        .flex_1()
-                                        .child(self.center.clone()),
-                                )
-                                .children(self.render_dock(&self.bottom_dock)),
-                        ),
-                ),
-            cx,
-        )
+        div()
+            .id("root")
+            .key_context("root")
+            .relative()
+            .size_full()
+            .flex()
+            .flex_col()
+            .justify_start()
+            .items_start()
+            .text_color(theme.foreground)
+            .overflow_hidden()
+            .child(
+                div()
+                    .id("workspace")
+                    .bg(theme.background)
+                    .relative()
+                    .flex_1()
+                    .w_full()
+                    .flex()
+                    .flex_col()
+                    .overflow_hidden()
+                    .border_t_1()
+                    .border_b_1()
+                    .border_color(theme.border)
+                    .child(
+                        div()
+                            .flex()
+                            .flex_row()
+                            .h_full()
+                            .children(self.render_dock(&self.right_dock))
+                            .child(
+                                div()
+                                    .flex()
+                                    .flex_col()
+                                    .flex_1()
+                                    .overflow_hidden()
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .flex_row()
+                                            .items_center()
+                                            .flex_1()
+                                            .child(self.center.clone()),
+                                    )
+                                    .children(self.render_dock(&self.bottom_dock)),
+                            ),
+                    ),
+            )
     }
 }

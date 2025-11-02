@@ -4,8 +4,7 @@ use gpui::{
     AnyView, App, AppContext, Axis, Context, Entity, ParentElement, Render, StyleRefinement,
     Styled, Subscription, WeakEntity, Window, div, prelude::FluentBuilder,
 };
-use theme::ActiveTheme;
-use ui::{placement::Placement, traits::styled_ext::StyledExt};
+use gpui_component::{ActiveTheme, Placement, StyledExt};
 
 use crate::Workspace;
 
@@ -25,7 +24,7 @@ impl<T: Panel> PanelHandle for Entity<T> {
         self.read(cx).priority()
     }
 
-    fn placement(&self, window: &Window, cx: &App) -> Placement {
+    fn placement(&self, _window: &Window, cx: &App) -> Placement {
         self.read(cx).placement()
     }
 
@@ -81,7 +80,7 @@ impl Dock {
     }
 
     pub fn remove_panel(&mut self, index: usize) {
-        self.items.remove(index);
+        let _ = self.items.remove(index);
 
         if let Some(current) = self.current.as_mut() {
             match index.cmp(current) {
@@ -115,8 +114,8 @@ impl Render for Dock {
         if let Some(panel) = self.visibile_panel() {
             div()
                 .flex()
-                .bg(cx.theme().colors().background)
-                .border_color(cx.theme().colors().border)
+                .bg(cx.theme().background)
+                .border_color(cx.theme().border)
                 .overflow_hidden()
                 .map(|this| match self.placement.axis() {
                     Axis::Vertical => this.h_full().flex_row(),

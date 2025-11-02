@@ -2,7 +2,8 @@ use gpui::{
     AppContext, Context, Entity, InteractiveElement, ParentElement, Render, Styled, WeakEntity,
     div, prelude::FluentBuilder,
 };
-use ui::traits::styled_ext::StyledExt;
+use gpui_component::{StyledExt, v_flex};
+use http_ui::{http_editor::HttpEditor, http_method_selector::HttpMethodSelector};
 
 use crate::{Workspace, item::ItemHandle};
 
@@ -34,8 +35,9 @@ impl Render for Area {
         window: &mut gpui::Window,
         cx: &mut Context<Self>,
     ) -> impl gpui::IntoElement {
-        div()
-            .v_flex()
+        let editor = cx.new(|cx| HttpEditor::new(window, cx));
+
+        v_flex()
             .id("area")
             .key_context("area")
             .size_full()
@@ -46,10 +48,7 @@ impl Render for Area {
                     if let Some(item) = self.active_item() {
                         this.v_flex().size_full().child(item.to_any())
                     } else {
-                        this.h_flex()
-                            .size_full()
-                            .justify_center()
-                            .child("Create a new request to get started.")
+                        this.h_flex().size_full().justify_center().child(editor)
                     }
                 })
             })
