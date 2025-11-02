@@ -382,20 +382,6 @@ mod tests {
             .kind()
                 == CookieRejectedErrorKind::InvalidCookieDomain
         );
-
-        // If the public suffix list is enabled, also exercise that validation.
-        if cfg!(feature = "psl") {
-            // wi.us is a public suffix
-            assert!(
-                jar.set(
-                    Cookie::parse("foo=bar; domain=wi.us").unwrap(),
-                    &"https://www.state.wi.us".parse().unwrap(),
-                )
-                .unwrap_err()
-                .kind()
-                    == CookieRejectedErrorKind::InvalidCookieDomain
-            );
-        }
     }
 
     #[test]

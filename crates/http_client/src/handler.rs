@@ -19,7 +19,7 @@ use std::{
     ffi::CStr,
     fmt,
     future::Future,
-    io, mem,
+    io,
     net::SocketAddr,
     os::raw::{c_char, c_long},
     pin::Pin,
@@ -536,7 +536,8 @@ impl curl::easy::Handler for RequestHandler {
                         if !self.disable_connection_reuse_log
                             && self.response_version < Some(http::Version::HTTP_2)
                         {
-                            tracing::info!("\
+                            tracing::info!(
+                                "\
                                 response dropped without fully consuming the response body, connection won't be reused\n\
                                 Aborting a response without fully consuming the response body can result in sub-optimal \
                                 performance. See https://github.com/sagebind/isahc/wiki/Connection-Reuse#closing-connections-early."

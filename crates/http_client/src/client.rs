@@ -38,7 +38,7 @@ use tracing_futures::Instrument;
 
 static USER_AGENT: LazyLock<String> = LazyLock::new(|| {
     format!(
-        "curl/{} isahc/{}",
+        "curl/{} bridge/{}",
         curl::Version::get().version(),
         env!("CARGO_PKG_VERSION")
     )
@@ -1043,7 +1043,6 @@ impl HttpClient {
 
         // Set the HTTP method to use. Curl ties in behavior with the request
         // method, so we need to configure this carefully.
-        #[allow(indirect_structural_match)]
         match (request.method(), has_body) {
             // Normal GET request.
             (&http::Method::GET, false) => {

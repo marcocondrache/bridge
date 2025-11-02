@@ -1,7 +1,6 @@
 //! Types for error handling.
 
 use std::{
-    cell::OnceCell,
     error::Error as StdError,
     fmt, io,
     net::SocketAddr,
