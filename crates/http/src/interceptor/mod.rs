@@ -15,11 +15,11 @@
 //!   `Error::Curl`. We should introduce a new error variant that boxes the
 //!   error and also records the type of the interceptor that created the error
 //!   for visibility. But we can't add a new variant right now without a BC
-//!   break. See [#182](https://github.com/sagebind/isahc/issues/182).
+//!   break. See [#182](https://github.com/sagebind/http/issues/182).
 //! - Automatic redirect following currently bypasses interceptors for
 //!   subsequent requests. This will be fixed when redirect handling is
 //!   rewritten as an interceptor itself. See
-//!   [#232](https://github.com/sagebind/isahc/issues/232).
+//!   [#232](https://github.com/sagebind/http/issues/232).
 ///
 /// # Availability
 ///

@@ -65,7 +65,7 @@ impl AsyncBody {
     /// # Examples
     ///
     /// ```
-    /// use isahc::Body;
+    /// use http::Body;
     ///
     /// // Create a body from a static string.
     /// let body = Body::from_bytes_static("hello world");

@@ -1,7 +1,6 @@
 use std::{
     error::Error,
-    fmt,
-    str,
+    fmt, str,
     time::{Duration, SystemTime},
 };
 
@@ -20,7 +19,7 @@ impl Error for ParseError {}
 /// Builder for a [`Cookie`].
 ///
 /// ```rust
-/// use isahc::cookies::Cookie;
+/// use http::cookies::Cookie;
 /// use std::time::{Duration, SystemTime};
 ///
 /// let cookie: Cookie = Cookie::builder("name", "value") // or CookieBuilder::new("name", "value")

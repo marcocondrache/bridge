@@ -19,9 +19,9 @@ pub trait ResponseExt<T> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// let mut response = isahc::get("https://my-site-with-trailers.com")?;
+    /// let mut response = http::get("https://my-site-with-trailers.com")?;
     ///
     /// println!("Status: {}", response.status());
     /// println!("Headers: {:#?}", response.headers());
@@ -31,7 +31,7 @@ pub trait ResponseExt<T> {
     ///
     /// // Now the trailer will be available as well.
     /// println!("Trailing headers: {:#?}", response.trailer().try_get().unwrap());
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     fn trailer(&self) -> &Trailer;
 
@@ -135,7 +135,7 @@ pub trait ReadResponseExt<R: Read> {
     /// Depending on which version of HTTP is being used, this may require
     /// closing the network connection to the server entirely. This can result
     /// in sub-optimal performance for making multiple requests, as it prevents
-    /// Isahc from keeping the connection alive to be reused for subsequent
+    /// HTTP from keeping the connection alive to be reused for subsequent
     /// requests.
     ///
     /// If you are downloading a file on behalf of a user and have been
@@ -154,16 +154,16 @@ pub trait ReadResponseExt<R: Read> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// let mut response = isahc::get("https://example.org")?;
+    /// let mut response = http::get("https://example.org")?;
     ///
     /// println!("Status: {}", response.status());
     /// println!("Headers: {:#?}", response.headers());
     ///
     /// // Read and discard the response body until the end.
     /// response.consume()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     fn consume(&mut self) -> io::Result<()> {
         self.copy_to(io::sink())?;
@@ -180,12 +180,12 @@ pub trait ReadResponseExt<R: Read> {
     /// Copying the response into an in-memory buffer:
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
     /// let mut buf = vec![];
-    /// isahc::get("https://example.org")?.copy_to(&mut buf)?;
+    /// http::get("https://example.org")?.copy_to(&mut buf)?;
     /// println!("Read {} bytes", buf.len());
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     fn copy_to<W: Write>(&mut self, writer: W) -> io::Result<u64>;
 
@@ -199,11 +199,11 @@ pub trait ReadResponseExt<R: Read> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// isahc::get("https://httpbin.org/image/jpeg")?
+    /// http::get("https://httpbin.org/image/jpeg")?
     ///     .copy_to_file("myimage.jpg")?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     fn copy_to_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<u64> {
         File::create(path).and_then(|f| self.copy_to(f))
@@ -214,10 +214,10 @@ pub trait ReadResponseExt<R: Read> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// let image_bytes = isahc::get("https://httpbin.org/image/jpeg")?.bytes()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// let image_bytes = http::get("https://httpbin.org/image/jpeg")?.bytes()?;
+    /// # Ok::<(), http::Error>(())
     /// ```
     fn bytes(&mut self) -> io::Result<Vec<u8>>;
 
@@ -246,11 +246,11 @@ pub trait ReadResponseExt<R: Read> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// let text = isahc::get("https://example.org")?.text()?;
+    /// let text = http::get("https://example.org")?.text()?;
     /// println!("{}", text);
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     fn text(&mut self) -> io::Result<String>;
 
@@ -264,10 +264,10 @@ pub trait ReadResponseExt<R: Read> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     /// use serde_json::Value;
     ///
-    /// let json: Value = isahc::get("https://httpbin.org/json")?.json()?;
+    /// let json: Value = http::get("https://httpbin.org/json")?.json()?;
     /// println!("author: {}", json["slideshow"]["author"]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
@@ -315,7 +315,7 @@ pub trait AsyncReadResponseExt<R: AsyncRead + Unpin> {
     /// Depending on which version of HTTP is being used, this may require
     /// closing the network connection to the server entirely. This can result
     /// in sub-optimal performance for making multiple requests, as it prevents
-    /// Isahc from keeping the connection alive to be reused for subsequent
+    /// HTTP from keeping the connection alive to be reused for subsequent
     /// requests.
     ///
     /// If you are downloading a file on behalf of a user and have been
@@ -334,10 +334,10 @@ pub trait AsyncReadResponseExt<R: AsyncRead + Unpin> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// # async fn run() -> Result<(), isahc::Error> {
-    /// let mut response = isahc::get_async("https://example.org").await?;
+    /// # async fn run() -> Result<(), http::Error> {
+    /// let mut response = http::get_async("https://example.org").await?;
     ///
     /// println!("Status: {}", response.status());
     /// println!("Headers: {:#?}", response.headers());
@@ -357,11 +357,11 @@ pub trait AsyncReadResponseExt<R: AsyncRead + Unpin> {
     /// Copying the response into an in-memory buffer:
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// # async fn run() -> Result<(), isahc::Error> {
+    /// # async fn run() -> Result<(), http::Error> {
     /// let mut buf = vec![];
-    /// isahc::get_async("https://example.org").await?
+    /// http::get_async("https://example.org").await?
     ///     .copy_to(&mut buf).await?;
     /// println!("Read {} bytes", buf.len());
     /// # Ok(()) }
@@ -375,10 +375,10 @@ pub trait AsyncReadResponseExt<R: AsyncRead + Unpin> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// # async fn run() -> Result<(), isahc::Error> {
-    /// let image_bytes = isahc::get_async("https://httpbin.org/image/jpeg")
+    /// # async fn run() -> Result<(), http::Error> {
+    /// let image_bytes = http::get_async("https://httpbin.org/image/jpeg")
     ///     .await?
     ///     .bytes()
     ///     .await?;
@@ -400,10 +400,10 @@ pub trait AsyncReadResponseExt<R: AsyncRead + Unpin> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     ///
-    /// # async fn run() -> Result<(), isahc::Error> {
-    /// let text = isahc::get_async("https://example.org").await?
+    /// # async fn run() -> Result<(), http::Error> {
+    /// let text = http::get_async("https://example.org").await?
     ///     .text().await?;
     /// println!("{}", text);
     /// # Ok(()) }
@@ -427,11 +427,11 @@ pub trait AsyncReadResponseExt<R: AsyncRead + Unpin> {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::prelude::*;
+    /// use http::prelude::*;
     /// use serde_json::Value;
     ///
     /// # async fn run() -> Result<(), Box<dyn std::error::Error>> {
-    /// let json: Value = isahc::get_async("https://httpbin.org/json").await?
+    /// let json: Value = http::get_async("https://httpbin.org/json").await?
     ///     .json().await?;
     /// println!("author: {}", json["slideshow"]["author"]);
     /// # Ok(()) }

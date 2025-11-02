@@ -1,6 +1,6 @@
 use super::AsyncBody;
 use futures_lite::{future::yield_now, io::AsyncWriteExt};
-use sluice::pipe::{pipe, PipeWriter};
+use sluice::pipe::{PipeWriter, pipe};
 use std::{
     borrow::Cow,
     fmt,
@@ -48,7 +48,7 @@ impl Body {
     /// # Examples
     ///
     /// ```
-    /// use isahc::Body;
+    /// use http::Body;
     ///
     /// // Create a body from a static string.
     /// let body = Body::from_bytes_static("hello world");
@@ -166,10 +166,7 @@ impl Body {
                     } else {
                         AsyncBody::from_reader(pipe_reader)
                     },
-                    Some(Writer {
-                        reader,
-                        writer,
-                    }),
+                    Some(Writer { reader, writer }),
                 )
             }
         }

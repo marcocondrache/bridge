@@ -540,7 +540,7 @@ impl curl::easy::Handler for RequestHandler {
                                 "\
                                 response dropped without fully consuming the response body, connection won't be reused\n\
                                 Aborting a response without fully consuming the response body can result in sub-optimal \
-                                performance. See https://github.com/sagebind/isahc/wiki/Connection-Reuse#closing-connections-early."
+                                performance. See https://github.com/sagebind/http/wiki/Connection-Reuse#closing-connections-early."
                             );
                         }
                     } else {
@@ -652,10 +652,10 @@ impl curl::easy::Handler for RequestHandler {
                 tracing::debug!("{}", String::from_utf8_lossy(data).trim_end())
             }
             InfoType::HeaderIn | InfoType::DataIn => {
-                tracing::trace!(target: "isahc::wire", "<< {}", FormatAscii(data))
+                tracing::trace!(target: "http::wire", "<< {}", FormatAscii(data))
             }
             InfoType::HeaderOut | InfoType::DataOut => {
-                tracing::trace!(target: "isahc::wire", ">> {}", FormatAscii(data))
+                tracing::trace!(target: "http::wire", ">> {}", FormatAscii(data))
             }
             _ => (),
         }

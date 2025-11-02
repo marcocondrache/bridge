@@ -45,7 +45,7 @@ pub enum ErrorKind {
 
     /// Provided authentication credentials were rejected by the server.
     ///
-    /// This error is only returned when using Isahc's built-in authentication
+    /// This error is only returned when using the built-in authentication
     /// methods. If using authentication headers manually, the server's response
     /// will be returned as a success unaltered.
     InvalidCredentials,
@@ -81,7 +81,7 @@ pub enum ErrorKind {
     /// re-send the request body, but was unable to rewind the body stream to
     /// the beginning in order to do so.
     ///
-    /// If you need Isahc to be able to re-send the request body during a retry
+    /// If you need to be able to re-send the request body during a retry
     /// or redirect then you must load the body into a contiguous memory buffer
     /// first. Then you can create a rewindable body using
     /// [`Body::from_bytes_static`][crate::Body::from_bytes_static] or
@@ -217,7 +217,7 @@ impl Error {
         error
     }
 
-    /// Statically cast a given error into an Isahc error, converting if
+    /// Statically cast a given error into an HTTP client error, converting if
     /// necessary.
     ///
     /// This is useful for converting or creating errors from external types
@@ -456,7 +456,7 @@ impl From<ErrorKind> for Error {
 
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Self {
-        // If this I/O error is just a wrapped Isahc error, then unwrap it.
+        // If this I/O error is just a wrapped HTTP client error, then unwrap it.
         if let Some(inner) = error.get_ref() {
             if inner.is::<Self>() {
                 return *error.into_inner().unwrap().downcast().unwrap();

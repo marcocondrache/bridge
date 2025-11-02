@@ -55,7 +55,7 @@ static USER_AGENT: LazyLock<String> = LazyLock::new(|| {
 /// # Examples
 ///
 /// ```
-/// use isahc::{
+/// use http::{
 ///     config::{RedirectPolicy, VersionNegotiation},
 ///     prelude::*,
 ///     HttpClient,
@@ -67,7 +67,7 @@ static USER_AGENT: LazyLock<String> = LazyLock::new(|| {
 ///     .redirect_policy(RedirectPolicy::Limit(10))
 ///     .version_negotiation(VersionNegotiation::http2())
 ///     .build()?;
-/// # Ok::<(), isahc::Error>(())
+/// # Ok::<(), http::Error>(())
 /// ```
 #[must_use = "builders have no effect if unused"]
 pub struct HttpClientBuilder {
@@ -115,7 +115,7 @@ impl HttpClientBuilder {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// // Create a client with a cookie jar.
     /// let client = HttpClient::builder()
@@ -254,7 +254,7 @@ impl HttpClientBuilder {
     /// # Examples
     ///
     /// ```
-    /// use isahc::{config::*, prelude::*, HttpClient};
+    /// use http::{config::*, prelude::*, HttpClient};
     /// use std::time::Duration;
     ///
     /// let client = HttpClient::builder()
@@ -265,7 +265,7 @@ impl HttpClientBuilder {
     ///     // Don't cache anything.
     ///     .dns_cache(DnsCache::Disable)
     ///     .build()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     pub fn dns_cache<C>(mut self, cache: C) -> Self
     where
@@ -290,7 +290,7 @@ impl HttpClientBuilder {
     /// # Examples
     ///
     /// ```
-    /// use isahc::{config::ResolveMap, prelude::*, HttpClient};
+    /// use http::{config::ResolveMap, prelude::*, HttpClient};
     /// use std::net::IpAddr;
     ///
     /// let client = HttpClient::builder()
@@ -323,7 +323,7 @@ impl HttpClientBuilder {
     /// # Examples
     ///
     /// ```
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let client = HttpClient::builder()
     ///     .default_header("some-header", "some-value")
@@ -367,7 +367,7 @@ impl HttpClientBuilder {
     /// Set default headers from a slice:
     ///
     /// ```
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let mut builder = HttpClient::builder()
     ///     .default_headers(&[
@@ -382,7 +382,7 @@ impl HttpClientBuilder {
     /// Using an existing header map:
     ///
     /// ```
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let mut headers = http::HeaderMap::new();
     /// headers.append("some-header".parse::<http::header::HeaderName>()?, "some-value".parse()?);
@@ -396,7 +396,7 @@ impl HttpClientBuilder {
     /// Using a hashmap:
     ///
     /// ```
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     /// use std::collections::HashMap;
     ///
     /// let mut headers = HashMap::new();
@@ -485,7 +485,7 @@ impl fmt::Debug for HttpClientBuilder {
 /// Helper trait for defining key-value pair types that can be dereferenced into
 /// a tuple from a reference.
 ///
-/// This trait is sealed and cannot be implemented for types outside of Isahc.
+/// This trait is sealed and cannot be implemented for types outside of HTTP.
 pub trait HeaderPair<K, V> {
     fn pair(self) -> (K, V);
 }
@@ -533,7 +533,7 @@ impl<'a, K: Copy, V: Copy> HeaderPair<K, V> for &'a (K, V) {
 /// # Examples
 ///
 /// ```no_run
-/// use isahc::{prelude::*, HttpClient};
+/// use http::{prelude::*, HttpClient};
 ///
 /// // Create a new client using reasonable defaults.
 /// let client = HttpClient::new()?;
@@ -543,13 +543,13 @@ impl<'a, K: Copy, V: Copy> HeaderPair<K, V> for &'a (K, V) {
 /// assert!(response.status().is_success());
 ///
 /// println!("Response:\n{}", response.text()?);
-/// # Ok::<(), isahc::Error>(())
+/// # Ok::<(), http::Error>(())
 /// ```
 ///
 /// Customizing the client configuration:
 ///
 /// ```no_run
-/// use isahc::{
+/// use http::{
 ///     config::{RedirectPolicy, VersionNegotiation},
 ///     prelude::*,
 ///     HttpClient,
@@ -566,7 +566,7 @@ impl<'a, K: Copy, V: Copy> HeaderPair<K, V> for &'a (K, V) {
 ///
 /// let response = client.get("https://example.org")?;
 /// assert!(response.status().is_success());
-/// # Ok::<(), isahc::Error>(())
+/// # Ok::<(), http::Error>(())
 /// ```
 ///
 /// See the documentation on [`HttpClientBuilder`] for a comprehensive look at
@@ -624,12 +624,12 @@ impl HttpClient {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let client = HttpClient::new()?;
     /// let mut response = client.get("https://example.org")?;
     /// println!("{}", response.text()?);
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[inline]
     pub fn get<U>(&self, uri: U) -> Result<Response<Body>, Error>
@@ -666,12 +666,12 @@ impl HttpClient {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let client = HttpClient::new()?;
     /// let response = client.head("https://example.org")?;
     /// println!("Page size: {:?}", response.headers()["content-length"]);
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[inline]
     pub fn head<U>(&self, uri: U) -> Result<Response<Body>, Error>
@@ -708,7 +708,7 @@ impl HttpClient {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let client = HttpClient::new()?;
     ///
@@ -716,7 +716,7 @@ impl HttpClient {
     ///     "speed": "fast",
     ///     "cool_name": true
     /// }"#)?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     #[inline]
     pub fn post<U, B>(&self, uri: U, body: B) -> Result<Response<Body>, Error>
     where
@@ -755,7 +755,7 @@ impl HttpClient {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let client = HttpClient::new()?;
     ///
@@ -763,7 +763,7 @@ impl HttpClient {
     ///     "speed": "fast",
     ///     "cool_name": true
     /// }"#)?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[inline]
     pub fn put<U, B>(&self, uri: U, body: B) -> Result<Response<Body>, Error>
@@ -856,7 +856,7 @@ impl HttpClient {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{prelude::*, HttpClient, Request};
+    /// use http::{prelude::*, HttpClient, Request};
     ///
     /// let client = HttpClient::new()?;
     ///
@@ -869,7 +869,7 @@ impl HttpClient {
     ///
     /// let response = client.send(request)?;
     /// assert!(response.status().is_success());
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     pub fn send<B>(&self, request: Request<B>) -> Result<Response<Body>, Error>
     where
@@ -945,8 +945,8 @@ impl HttpClient {
     /// # Examples
     ///
     /// ```no_run
-    /// # async fn run() -> Result<(), isahc::Error> {
-    /// use isahc::{prelude::*, HttpClient, Request};
+    /// # async fn run() -> Result<(), http::Error> {
+    /// use http::{prelude::*, HttpClient, Request};
     ///
     /// let client = HttpClient::new()?;
     ///

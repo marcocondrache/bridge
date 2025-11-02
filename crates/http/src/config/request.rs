@@ -1,4 +1,4 @@
-//! Internal traits that define the Isahc configuration system.
+//! Internal traits that define the HTTP configuration system.
 
 use super::{proxy::Proxy, *};
 use curl::easy::Easy2;

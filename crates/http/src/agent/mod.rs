@@ -138,7 +138,7 @@ impl AgentBuilder {
             waker,
             join_handle: Mutex::new(Some(
                 thread::Builder::new()
-                    .name(format!("isahc-agent-{}", id))
+                    .name(format!("http-agent-{}", id))
                     .spawn(thread_main)?,
             )),
         };

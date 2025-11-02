@@ -3,8 +3,8 @@
 //! # Cookie jars
 //!
 //! By default HTTP is a mostly stateless protocol, but using cookies allow a
-//! server to request a client to persist specific state between requests. Isahc
-//! does not do this by default, but provides support for cookie state using a
+//! server to request a client to persist specific state between requests. This
+//! HTTP client does not do this by default, but provides support for cookie state using a
 //! _cookie jar_, which can store a list of cookies in memory between requests
 //! and is responsible for keeping track of which cookies belong to which
 //! domains.

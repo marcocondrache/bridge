@@ -1,6 +1,6 @@
 //! The practical HTTP client that is fun to use.
 //!
-//! Here are some of Isahc's key features:
+//! Here are some of the key features:
 //!
 //! - Full support for HTTP/1.1 and HTTP/2.
 //! - Configurable request timeouts, redirect policies, Unix sockets, and many
@@ -18,11 +18,11 @@
 //! simple GET request to an example website:
 //!
 //! ```no_run
-//! use isahc::prelude::*;
+//! use http::prelude::*;
 //!
-//! let mut response = isahc::get("https://example.org")?;
+//! let mut response = http::get("https://example.org")?;
 //! println!("{}", response.text()?);
-//! # Ok::<(), isahc::Error>(())
+//! # Ok::<(), http::Error>(())
 //! ```
 //!
 //! By default, sending a request will wait for the response, up until the
@@ -33,17 +33,17 @@
 //! the request body:
 //!
 //! ```no_run
-//! let response = isahc::post("https://httpbin.org/post", "make me a salad")?;
-//! # Ok::<(), isahc::Error>(())
+//! let response = http::post("https://httpbin.org/post", "make me a salad")?;
+//! # Ok::<(), http::Error>(())
 //! ```
 //!
-//! Isahc provides several other simple functions for common HTTP request types:
+//! This crate provides several other simple functions for common HTTP request types:
 //!
 //! ```no_run
-//! isahc::put("https://httpbin.org/put", "have a salad")?;
-//! isahc::head("https://httpbin.org/get")?;
-//! isahc::delete("https://httpbin.org/delete")?;
-//! # Ok::<(), isahc::Error>(())
+//! http::put("https://httpbin.org/put", "have a salad")?;
+//! http::head("https://httpbin.org/get")?;
+//! http::delete("https://httpbin.org/delete")?;
+//! # Ok::<(), http::Error>(())
 //! ```
 //!
 //! If you want to customize the request by adding headers, setting timeouts,
@@ -52,7 +52,7 @@
 //! [`send`][RequestExt::send]:
 //!
 //! ```no_run
-//! use isahc::{prelude::*, Request};
+//! use http::{prelude::*, Request};
 //! use std::time::Duration;
 //!
 //! let response = Request::post("https://httpbin.org/post")
@@ -63,16 +63,12 @@
 //!         "cool_name": true
 //!     }"#)?
 //!     .send()?;
-//! # Ok::<(), isahc::Error>(())
+//! # Ok::<(), http::Error>(())
 //! ```
-//!
-//! For even more examples used in complete programs, please check out the
-//! [examples](https://github.com/sagebind/isahc/tree/master/examples) directory
-//! in the project repo.
 //!
 //! # Feature tour
 //!
-//! Below is a brief overview of some notable features of Isahc. Check out the
+//! Below is a brief overview of some notable features. Check out the
 //! rest of the documentation for even more guides and examples.
 //!
 //! ## Easy request functions
@@ -85,7 +81,7 @@
 //!
 //! ## Request and response traits
 //!
-//! Isahc includes a number of traits in the [`prelude`] module that extend the
+//! This crate includes a number of traits in the [`prelude`] module that extend the
 //! [`Request`] and [`Response`] types with a plethora of extra methods that
 //! make common tasks convenient and allow you to configure more advanced
 //! connection and protocol details.
@@ -122,10 +118,10 @@
 //! Here is our first example rewritten to use async/await syntax:
 //!
 //! ```no_run
-//! # async fn run() -> Result<(), isahc::Error> {
-//! use isahc::prelude::*;
+//! # async fn run() -> Result<(), http::Error> {
+//! use http::prelude::*;
 //!
-//! let mut response = isahc::get_async("https://httpbin.org/get").await?;
+//! let mut response = http::get_async("https://httpbin.org/get").await?;
 //! println!("{}", response.text().await?);
 //! # Ok(()) }
 //! ```
@@ -137,13 +133,13 @@
 //!
 //! # Feature flags
 //!
-//! Isahc is designed to be as "pay-as-you-need" as possible using Cargo feature
+//! This crate is designed to be as "pay-as-you-need" as possible using Cargo feature
 //! flags and optional dependencies. Unstable features are also initially
 //! released behind feature flags until they are stabilized. You can add the
 //! feature names below to your `Cargo.toml` file to enable them:
 //!
 //! ```toml
-//! [dependencies.isahc]
+//! [dependencies.http]
 //! version = "1.7"
 //! features = ["psl"]
 //! ```
@@ -207,14 +203,14 @@
 //!
 //! # Logging and tracing
 //!
-//! Isahc logs quite a bit of useful information at various levels compatible
+//! This crate logs quite a bit of useful information at various levels compatible
 //! with the [log](https://docs.rs/log) crate. For even more in-depth
 //! diagnostics, you can use a [tracing](https://docs.rs/tracing) subscriber to
 //! track log events grouped by individual requests. This can be especially
 //! useful if you are sending multiple requests concurrently.
 //!
-//! If you set the log level to `Trace` for the `isahc::wire` target, Isahc will
-//! also log all incoming and outgoing data while in flight. This may come in
+//! If you set the log level to `Trace` for the `http::wire` target, all
+//! incoming and outgoing data while in flight will be logged. This may come in
 //! handy if you are debugging code and need to see the exact data being sent to
 //! the server and being received.
 
@@ -256,7 +252,7 @@ pub use crate::{
     trailer::Trailer,
 };
 
-/// A "prelude" for importing commonly used Isahc types and traits.
+/// A "prelude" for importing commonly used HTTP client types and traits.
 ///
 /// The prelude re-exports most commonly used traits and macros from this crate.
 ///
@@ -265,7 +261,7 @@ pub use crate::{
 /// Import the prelude with:
 ///
 /// ```
-/// use isahc::prelude::*;
+/// use http::prelude::*;
 /// ```
 pub mod prelude {
     pub use crate::{

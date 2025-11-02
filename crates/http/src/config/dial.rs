@@ -35,11 +35,11 @@ impl std::error::Error for DialerParseError {}
 /// Connect to a Unix socket URI:
 ///
 /// ```
-/// use isahc::config::Dialer;
+/// use http::config::Dialer;
 ///
 /// # #[cfg(unix)]
 /// let unix_socket = "unix:/path/to/my.sock".parse::<Dialer>()?;
-/// # Ok::<(), isahc::config::DialerParseError>(())
+/// # Ok::<(), http::config::DialerParseError>(())
 /// ```
 #[derive(Clone, Debug)]
 pub struct Dialer(Inner);
@@ -63,14 +63,14 @@ impl Dialer {
     /// # Examples
     ///
     /// ```
-    /// use isahc::config::Dialer;
+    /// use http::config::Dialer;
     /// use std::net::Ipv4Addr;
     ///
     /// let dialer = Dialer::ip_socket((Ipv4Addr::LOCALHOST, 8080));
     /// ```
     ///
     /// ```
-    /// use isahc::config::Dialer;
+    /// use http::config::Dialer;
     /// use std::net::SocketAddr;
     ///
     /// let dialer = Dialer::ip_socket("0.0.0.0:8765".parse::<SocketAddr>()?);
@@ -90,7 +90,7 @@ impl Dialer {
     /// # Examples
     ///
     /// ```
-    /// use isahc::config::Dialer;
+    /// use http::config::Dialer;
     ///
     /// let docker = Dialer::unix_socket("/var/run/docker.sock");
     /// ```

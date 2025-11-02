@@ -42,7 +42,7 @@ pub use ssl::{CaCertificate, ClientCertificate, PrivateKey, SslOption};
 /// for an [`HttpClient`](crate::HttpClient) by invoking them on an
 /// [`HttpClientBuilder`](crate::HttpClientBuilder).
 ///
-/// This trait is sealed and cannot be implemented for types outside of Isahc.
+/// This trait is sealed and cannot be implemented for types outside of this crate.
 pub trait Configurable: request::WithRequestConfig {
     /// Specify a maximum amount of time that a complete request/response cycle
     /// is allowed to take before being aborted. This includes DNS resolution,
@@ -66,7 +66,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{prelude::*, Request};
+    /// use http::{prelude::*, Request};
     /// use std::time::Duration;
     ///
     /// // This page is too slow and won't respond in time.
@@ -75,7 +75,7 @@ pub trait Configurable: request::WithRequestConfig {
     ///     .body(())?
     ///     .send()
     ///     .expect_err("page should time out");
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn timeout(self, timeout: Duration) -> Self {
@@ -113,7 +113,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```
-    /// use isahc::{
+    /// use http::{
     ///     config::VersionNegotiation,
     ///     prelude::*,
     ///     HttpClient,
@@ -128,7 +128,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// let http2_client = HttpClient::builder()
     ///     .version_negotiation(VersionNegotiation::http2())
     ///     .build()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn version_negotiation(self, negotiation: VersionNegotiation) -> Self {
@@ -144,7 +144,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{config::RedirectPolicy, prelude::*, Request};
+    /// use http::{config::RedirectPolicy, prelude::*, Request};
     ///
     /// // This URL redirects us to where we want to go.
     /// let response = Request::get("https://httpbin.org/redirect/1")
@@ -158,7 +158,7 @@ pub trait Configurable: request::WithRequestConfig {
     ///     .body(())?
     ///     .send()
     ///     .expect_err("too many redirects");
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn redirect_policy(self, policy: RedirectPolicy) -> Self {
@@ -193,16 +193,16 @@ pub trait Configurable: request::WithRequestConfig {
     /// [`Content-Encoding`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding)
     /// response header.
     ///
-    /// If set to true (the default), Isahc will automatically and transparently
+    /// If set to true (the default), HTTP will automatically and transparently
     /// decode the HTTP response body for known and available compression
     /// algorithms. If the server returns a response with an unknown or
-    /// unavailable encoding, Isahc will return an
+    /// unavailable encoding, HTTP will return an
     /// [`InvalidContentEncoding`](crate::error::ErrorKind::InvalidContentEncoding)
     /// error.
     ///
     /// If you do not specify a specific value for the
     /// [`Accept-Encoding`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding)
-    /// header, Isahc will set one for you automatically based on this option.
+    /// header, HTTP will set one for you automatically based on this option.
     #[must_use = "builders have no effect if unused"]
     fn automatic_decompression(self, decompress: bool) -> Self {
         self.with_config(move |config| {
@@ -214,7 +214,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// bodies with HTTP/1.1.
     ///
     /// By default, when sending requests containing a body of large or unknown
-    /// length over HTTP/1.1, Isahc will send the request headers first without
+    /// length over HTTP/1.1, HTTP will send the request headers first without
     /// the body and wait for the server to respond with a 100 (Continue) status
     /// code, as defined by [RFC 7231, Section
     /// 5.1.1](https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1).
@@ -237,7 +237,7 @@ pub trait Configurable: request::WithRequestConfig {
     ///
     /// ```
     /// use std::time::Duration;
-    /// use isahc::{
+    /// use http::{
     ///     config::ExpectContinue,
     ///     prelude::*,
     ///     HttpClient,
@@ -266,7 +266,7 @@ pub trait Configurable: request::WithRequestConfig {
     ///     // or equivalently...
     ///     .expect_continue(false)
     ///     .build()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn expect_continue<T>(self, expect: T) -> Self
@@ -288,7 +288,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```
-    /// use isahc::{
+    /// use http::{
     ///     auth::{Authentication, Credentials},
     ///     prelude::*,
     ///     HttpClient,
@@ -298,7 +298,7 @@ pub trait Configurable: request::WithRequestConfig {
     ///     .authentication(Authentication::basic() | Authentication::digest())
     ///     .credentials(Credentials::new("clark", "qwerty"))
     ///     .build()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn authentication(self, authentication: Authentication) -> Self {
@@ -341,7 +341,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// Bind to an IP address.
     ///
     /// ```
-    /// use isahc::{
+    /// use http::{
     ///     prelude::*,
     ///     config::NetworkInterface,
     ///     HttpClient,
@@ -365,7 +365,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// let request = Request::get("https://example.org")
     ///     .interface(NetworkInterface::any())
     ///     .body(())?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn interface<I>(self, interface: I) -> Self
@@ -399,7 +399,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// Connecting to a Unix socket:
     ///
     /// ```
-    /// use isahc::{
+    /// use http::{
     ///     config::Dialer,
     ///     prelude::*,
     ///     Request,
@@ -409,13 +409,13 @@ pub trait Configurable: request::WithRequestConfig {
     /// let request = Request::get("http://localhost/containers")
     ///     .dial(Dialer::unix_socket("/path/to/my.sock"))
     ///     .body(())?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     ///
     /// Connecting to a specific Internet socket address:
     ///
     /// ```
-    /// use isahc::{
+    /// use http::{
     ///     config::Dialer,
     ///     prelude::*,
     ///     Request,
@@ -427,7 +427,7 @@ pub trait Configurable: request::WithRequestConfig {
     ///     // header will remain unchanged.
     ///     .dial(Dialer::ip_socket((Ipv4Addr::LOCALHOST, 8080)))
     ///     .body(())?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn dial<D>(self, dialer: D) -> Self
@@ -461,7 +461,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// Using `http://proxy:80` as a proxy:
     ///
     /// ```
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let client = HttpClient::builder()
     ///     .proxy(Some("http://proxy:80".parse()?))
@@ -472,7 +472,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// Explicitly disable the use of a proxy:
     ///
     /// ```
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let client = HttpClient::builder()
     ///     .proxy(None)
@@ -491,13 +491,13 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```
-    /// use isahc::{prelude::*, HttpClient};
+    /// use http::{prelude::*, HttpClient};
     ///
     /// let client = HttpClient::builder()
     ///     // Disable proxy for specified hosts.
     ///     .proxy_blacklist(vec!["a.com", "b.org"])
     ///     .build()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn proxy_blacklist<I, T>(self, hosts: I) -> Self
@@ -520,7 +520,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```
-    /// use isahc::{
+    /// use http::{
     ///     auth::{Authentication, Credentials},
     ///     prelude::*,
     ///     HttpClient,
@@ -583,7 +583,7 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{
+    /// use http::{
     ///     config::{ClientCertificate, PrivateKey},
     ///     prelude::*,
     ///     Request,
@@ -596,11 +596,11 @@ pub trait Configurable: request::WithRequestConfig {
     ///     ))
     ///     .body(())?
     ///     .send()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     ///
     /// ```
-    /// use isahc::{
+    /// use http::{
     ///     config::{ClientCertificate, PrivateKey},
     ///     prelude::*,
     ///     HttpClient,
@@ -612,7 +612,7 @@ pub trait Configurable: request::WithRequestConfig {
     ///         PrivateKey::pem_file("key.pem", String::from("secret")),
     ///     ))
     ///     .build()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn ssl_client_certificate(self, certificate: ClientCertificate) -> Self {
@@ -635,12 +635,12 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```
-    /// use isahc::{config::CaCertificate, prelude::*, HttpClient};
+    /// use http::{config::CaCertificate, prelude::*, HttpClient};
     ///
     /// let client = HttpClient::builder()
     ///     .ssl_ca_certificate(CaCertificate::file("ca.pem"))
     ///     .build()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn ssl_ca_certificate(self, certificate: CaCertificate) -> Self {
@@ -684,22 +684,22 @@ pub trait Configurable: request::WithRequestConfig {
     /// # Examples
     ///
     /// ```no_run
-    /// use isahc::{config::SslOption, prelude::*, Request};
+    /// use http::{config::SslOption, prelude::*, Request};
     ///
     /// let response = Request::get("https://badssl.com")
     ///     .ssl_options(SslOption::DANGER_ACCEPT_INVALID_CERTS | SslOption::DANGER_ACCEPT_REVOKED_CERTS)
     ///     .body(())?
     ///     .send()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     ///
     /// ```
-    /// use isahc::{config::SslOption, prelude::*, HttpClient};
+    /// use http::{config::SslOption, prelude::*, HttpClient};
     ///
     /// let client = HttpClient::builder()
     ///     .ssl_options(SslOption::DANGER_ACCEPT_INVALID_CERTS | SslOption::DANGER_ACCEPT_REVOKED_CERTS)
     ///     .build()?;
-    /// # Ok::<(), isahc::Error>(())
+    /// # Ok::<(), http::Error>(())
     /// ```
     #[must_use = "builders have no effect if unused"]
     fn ssl_options(self, options: SslOption) -> Self {
@@ -876,7 +876,7 @@ impl NetworkInterface {
     /// # Examples
     ///
     /// ```
-    /// # use isahc::config::NetworkInterface;
+    /// # use http::config::NetworkInterface;
     /// let loopback = NetworkInterface::name("lo");
     /// let wifi = NetworkInterface::name("wlan0");
     /// ```
@@ -893,7 +893,7 @@ impl NetworkInterface {
     /// # Examples
     ///
     /// ```
-    /// # use isahc::config::NetworkInterface;
+    /// # use http::config::NetworkInterface;
     /// let local = NetworkInterface::host("server.local");
     /// let addr = NetworkInterface::host("192.168.1.2");
     /// ```
@@ -971,7 +971,7 @@ impl SetOpt for IpVersion {
 /// with HTTP/1.1.
 ///
 /// By default, when sending requests containing a body of large or unknown
-/// length over HTTP/1.1, Isahc will send the request headers first without the
+/// length over HTTP/1.1, HTTP will send the request headers first without the
 /// body and wait for the server to respond with a 100 (Continue) status code,
 /// as defined by [RFC 7231, Section
 /// 5.1.1](https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1). This
