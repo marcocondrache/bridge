@@ -218,25 +218,6 @@
 //! handy if you are debugging code and need to see the exact data being sent to
 //! the server and being received.
 
-#![doc(
-    html_logo_url = "https://raw.githubusercontent.com/sagebind/isahc/master/media/isahc.svg.png",
-    html_favicon_url = "https://raw.githubusercontent.com/sagebind/isahc/master/media/icon.png"
-)]
-#![deny(unsafe_code)]
-#![cfg_attr(feature = "nightly", feature(doc_cfg))]
-#![cfg_attr(feature = "nightly", feature(doc_auto_cfg))]
-#![warn(
-    future_incompatible,
-    missing_debug_implementations,
-    missing_docs,
-    rust_2018_idioms,
-    unreachable_pub,
-    unused,
-    clippy::all
-)]
-// These lints suggest to use features not available in our MSRV.
-#![allow(clippy::manual_strip, clippy::match_like_matches_macro)]
-
 #[macro_use]
 mod macros;
 
@@ -287,8 +268,7 @@ pub use crate::{
 /// use isahc::prelude::*;
 /// ```
 pub mod prelude {
-    #[doc(no_inline)]
     pub use crate::{
-        config::Configurable, AsyncReadResponseExt, ReadResponseExt, RequestExt, ResponseExt,
+        AsyncReadResponseExt, ReadResponseExt, RequestExt, ResponseExt, config::Configurable,
     };
 }

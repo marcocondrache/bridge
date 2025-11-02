@@ -22,7 +22,6 @@ curl-sys.workspace = true
 async-channel.workspace = true
 http.workspace = true
 futures-lite.workspace = true
-openssl.workspace = true
 httpdate.workspace = true
 mime.workspace = true
 encoding_rs.workspace = true

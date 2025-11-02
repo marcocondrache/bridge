@@ -70,11 +70,6 @@ impl Authentication {
         #[allow(unused_mut)]
         let mut all = Self::basic().0 | Self::digest().0;
 
-        #[cfg(feature = "spnego")]
-        {
-            all |= Self::negotiate().0;
-        }
-
         Authentication(all)
     }
 
@@ -96,26 +91,6 @@ impl Authentication {
         Authentication(0b0010)
     }
 
-    /// HTTP Negotiate (SPNEGO) authentication.
-    ///
-    /// Negotiate authentication is defined in RFC 4559 and is the most secure
-    /// way to perform authentication over HTTP. Specifying [`Credentials`] is
-    /// not necessary as credentials are provided by platform authentication
-    /// means.
-    ///
-    /// You need to build libcurl with a suitable GSS-API library or SSPI on
-    /// Windows for this to work. This is automatic when binding to curl
-    /// statically, otherwise it depends on how your system curl is configured.
-    ///
-    /// # Availability
-    ///
-    /// This method is only available when the [`spnego`](../index.html#spnego)
-    /// feature is enabled.
-    #[cfg(feature = "spnego")]
-    pub const fn negotiate() -> Self {
-        Authentication(0b0100)
-    }
-
     const fn contains(&self, other: Self) -> bool {
         (self.0 & other.0) == other.0
     }
@@ -129,13 +104,6 @@ impl Authentication {
 
         if self.contains(Authentication::digest()) {
             auth.digest(true);
-        }
-
-        #[cfg(feature = "spnego")]
-        {
-            if self.contains(Authentication::negotiate()) {
-                auth.gssnegotiate(true);
-            }
         }
 
         auth
@@ -159,32 +127,12 @@ impl BitOrAssign for Authentication {
 
 impl SetOpt for Authentication {
     fn set_opt<H>(&self, easy: &mut curl::easy::Easy2<H>) -> Result<(), curl::Error> {
-        #[cfg(feature = "spnego")]
-        {
-            if self.contains(Authentication::negotiate()) {
-                // Ensure auth engine is enabled, even though credentials do not
-                // need to be specified.
-                easy.username("")?;
-                easy.password("")?;
-            }
-        }
-
         easy.http_auth(&self.as_auth())
     }
 }
 
 impl SetOpt for Proxy<Authentication> {
     fn set_opt<H>(&self, easy: &mut curl::easy::Easy2<H>) -> Result<(), curl::Error> {
-        #[cfg(feature = "spnego")]
-        {
-            if self.0.contains(Authentication::negotiate()) {
-                // Ensure auth engine is enabled, even though credentials do not
-                // need to be specified.
-                easy.proxy_username("")?;
-                easy.proxy_password("")?;
-            }
-        }
-
         easy.proxy_auth(&self.0.as_auth())
     }
 }
