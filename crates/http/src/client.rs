@@ -632,13 +632,13 @@ impl HttpClient {
     /// # Ok::<(), http::Error>(())
     /// ```
     #[inline]
-    pub fn get<U>(&self, uri: U) -> Result<Response<Body>, Error>
+    pub fn get_blocking<U>(&self, uri: U) -> Result<Response<Body>, Error>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
     {
         match http::Request::get(uri).body(()) {
-            Ok(request) => self.send(request),
+            Ok(request) => self.send_blocking(request),
             Err(e) => Err(Error::from_any(e)),
         }
     }
@@ -647,13 +647,13 @@ impl HttpClient {
     ///
     /// To customize the request further, see [`HttpClient::send_async`]. To
     /// execute the request synchronously, see [`HttpClient::get`].
-    pub fn get_async<U>(&self, uri: U) -> ResponseFuture<'_>
+    pub fn get<U>(&self, uri: U) -> ResponseFuture<'_>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
     {
         match http::Request::get(uri).body(()) {
-            Ok(request) => self.send_async(request),
+            Ok(request) => self.send(request),
             Err(e) => ResponseFuture::error(Error::from_any(e)),
         }
     }
@@ -674,13 +674,13 @@ impl HttpClient {
     /// # Ok::<(), http::Error>(())
     /// ```
     #[inline]
-    pub fn head<U>(&self, uri: U) -> Result<Response<Body>, Error>
+    pub fn head_blocking<U>(&self, uri: U) -> Result<Response<Body>, Error>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
     {
         match http::Request::head(uri).body(()) {
-            Ok(request) => self.send(request),
+            Ok(request) => self.send_blocking(request),
             Err(e) => Err(Error::from_any(e)),
         }
     }
@@ -689,13 +689,13 @@ impl HttpClient {
     ///
     /// To customize the request further, see [`HttpClient::send_async`]. To
     /// execute the request synchronously, see [`HttpClient::head`].
-    pub fn head_async<U>(&self, uri: U) -> ResponseFuture<'_>
+    pub fn head<U>(&self, uri: U) -> ResponseFuture<'_>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
     {
         match http::Request::head(uri).body(()) {
-            Ok(request) => self.send_async(request),
+            Ok(request) => self.send(request),
             Err(e) => ResponseFuture::error(Error::from_any(e)),
         }
     }
@@ -718,14 +718,14 @@ impl HttpClient {
     /// }"#)?;
     /// # Ok::<(), http::Error>(())
     #[inline]
-    pub fn post<U, B>(&self, uri: U, body: B) -> Result<Response<Body>, Error>
+    pub fn post_blocking<U, B>(&self, uri: U, body: B) -> Result<Response<Body>, Error>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
         B: Into<Body>,
     {
         match http::Request::post(uri).body(body) {
-            Ok(request) => self.send(request),
+            Ok(request) => self.send_blocking(request),
             Err(e) => Err(Error::from_any(e)),
         }
     }
@@ -735,14 +735,14 @@ impl HttpClient {
     ///
     /// To customize the request further, see [`HttpClient::send_async`]. To
     /// execute the request synchronously, see [`HttpClient::post`].
-    pub fn post_async<U, B>(&self, uri: U, body: B) -> ResponseFuture<'_>
+    pub fn post<U, B>(&self, uri: U, body: B) -> ResponseFuture<'_>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
         B: Into<AsyncBody>,
     {
         match http::Request::post(uri).body(body) {
-            Ok(request) => self.send_async(request),
+            Ok(request) => self.send(request),
             Err(e) => ResponseFuture::error(Error::from_any(e)),
         }
     }
@@ -766,14 +766,14 @@ impl HttpClient {
     /// # Ok::<(), http::Error>(())
     /// ```
     #[inline]
-    pub fn put<U, B>(&self, uri: U, body: B) -> Result<Response<Body>, Error>
+    pub fn put_blocking<U, B>(&self, uri: U, body: B) -> Result<Response<Body>, Error>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
         B: Into<Body>,
     {
         match http::Request::put(uri).body(body) {
-            Ok(request) => self.send(request),
+            Ok(request) => self.send_blocking(request),
             Err(e) => Err(Error::from_any(e)),
         }
     }
@@ -783,14 +783,14 @@ impl HttpClient {
     ///
     /// To customize the request further, see [`HttpClient::send_async`]. To
     /// execute the request synchronously, see [`HttpClient::put`].
-    pub fn put_async<U, B>(&self, uri: U, body: B) -> ResponseFuture<'_>
+    pub fn put<U, B>(&self, uri: U, body: B) -> ResponseFuture<'_>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
         B: Into<AsyncBody>,
     {
         match http::Request::put(uri).body(body) {
-            Ok(request) => self.send_async(request),
+            Ok(request) => self.send(request),
             Err(e) => ResponseFuture::error(Error::from_any(e)),
         }
     }
@@ -800,13 +800,13 @@ impl HttpClient {
     /// To customize the request further, see [`HttpClient::send`]. To execute
     /// the request asynchronously, see [`HttpClient::delete_async`].
     #[inline]
-    pub fn delete<U>(&self, uri: U) -> Result<Response<Body>, Error>
+    pub fn delete_blocking<U>(&self, uri: U) -> Result<Response<Body>, Error>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
     {
         match http::Request::delete(uri).body(()) {
-            Ok(request) => self.send(request),
+            Ok(request) => self.send_blocking(request),
             Err(e) => Err(Error::from_any(e)),
         }
     }
@@ -815,13 +815,13 @@ impl HttpClient {
     ///
     /// To customize the request further, see [`HttpClient::send_async`]. To
     /// execute the request synchronously, see [`HttpClient::delete`].
-    pub fn delete_async<U>(&self, uri: U) -> ResponseFuture<'_>
+    pub fn delete<U>(&self, uri: U) -> ResponseFuture<'_>
     where
         http::Uri: TryFrom<U>,
         <http::Uri as TryFrom<U>>::Error: Into<http::Error>,
     {
         match http::Request::delete(uri).body(()) {
-            Ok(request) => self.send_async(request),
+            Ok(request) => self.send(request),
             Err(e) => ResponseFuture::error(Error::from_any(e)),
         }
     }
@@ -871,7 +871,7 @@ impl HttpClient {
     /// assert!(response.status().is_success());
     /// # Ok::<(), http::Error>(())
     /// ```
-    pub fn send<B>(&self, request: Request<B>) -> Result<Response<Body>, Error>
+    pub fn send_blocking<B>(&self, request: Request<B>) -> Result<Response<Body>, Error>
     where
         B: Into<Body>,
     {
@@ -899,14 +899,14 @@ impl HttpClient {
                     // Note that the `send_async` future is given first; this
                     // ensures that it is polled first and thus the request is
                     // initiated before we attempt to write the request body.
-                    let (response, _) = try_zip(self.send_async_inner(request), async move {
+                    let (response, _) = try_zip(self.send_inner(request), async move {
                         writer.write().await.map_err(Error::from)
                     })
                     .await?;
 
                     Ok(response)
                 } else {
-                    self.send_async_inner(request).await
+                    self.send_inner(request).await
                 }
             }
             .instrument(span),
@@ -962,7 +962,7 @@ impl HttpClient {
     /// # Ok(()) }
     /// ```
     #[inline]
-    pub fn send_async<B>(&self, request: Request<B>) -> ResponseFuture<'_>
+    pub fn send<B>(&self, request: Request<B>) -> ResponseFuture<'_>
     where
         B: Into<AsyncBody>,
     {
@@ -972,14 +972,11 @@ impl HttpClient {
             uri = ?request.uri(),
         );
 
-        ResponseFuture::new(
-            self.send_async_inner(request.map(Into::into))
-                .instrument(span),
-        )
+        ResponseFuture::new(self.send_inner(request.map(Into::into)).instrument(span))
     }
 
     /// Actually send the request. All the public methods go through here.
-    async fn send_async_inner(
+    async fn send_inner(
         &self,
         mut request: Request<AsyncBody>,
     ) -> Result<Response<AsyncBody>, Error> {
