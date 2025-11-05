@@ -1,9 +1,10 @@
 mod http_method_selector;
+mod http_response;
 
 use anyhow::{Ok, Result};
 use gpui::{
     App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, ParentElement,
-    Render, Styled, Task, WeakEntity, Window, div,
+    Render, Styled, Task, Window, div,
 };
 use gpui_component::{
     StyledExt,
@@ -12,11 +13,12 @@ use gpui_component::{
     tab::{Tab, TabBar},
 };
 use http_client::{
-    AsyncBody, AsyncReadResponseExt, HttpClient, Request, Response, config::Configurable,
+    AsyncBody, AsyncReadResponseExt, HttpClient, Request, Response, ResponseExt,
+    config::Configurable,
 };
 use workspace::{AppState, NewHttpEditor, Workspace, item::Item};
 
-use crate::http_method_selector::HttpMethodSelector;
+use crate::{http_method_selector::HttpMethodSelector, http_response::HttpResponse};
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, window, cx| {
@@ -41,20 +43,20 @@ pub struct HttpEditor {
     focus_handle: FocusHandle,
     target_uri: Entity<InputState>,
     method_selector: Entity<HttpMethodSelector>,
-    response: Entity<InputState>,
+    response: Entity<HttpResponse>,
     executing_task: Option<Task<Result<Response<AsyncBody>, http_client::Error>>>,
 }
 
 impl HttpEditor {
     pub fn new(window: &mut Window, cx: &mut App) -> Self {
+        let response = HttpResponse::new(window, cx);
         let method_selector = HttpMethodSelector::new(cx);
         let target_uri = cx.new(|cx| InputState::new(window, cx));
-        let response = cx.new(|cx| InputState::new(window, cx).code_editor(""));
 
         Self {
+            response,
             target_uri,
             method_selector,
-            response,
             focus_handle: cx.focus_handle(),
             executing_task: None,
         }
@@ -81,6 +83,8 @@ impl HttpEditor {
             .method(method)
             .uri(uri)
             .automatic_decompression(true)
+            .redirect_policy(http_client::config::RedirectPolicy::Follow)
+            .metrics(true)
             .body(body)
             .map_err(|e| e.into())
     }
@@ -90,7 +94,7 @@ impl HttpEditor {
         let request = self.build_request(cx, ())?;
         let output = self.response.clone();
 
-        cx.spawn_in(window, async move |this, mut cx| {
+        cx.spawn_in(window, async move |_this, cx| {
             let mut response = cx
                 .update(|_window, cx| {
                     cx.background_spawn(async move { client.send(request).await })
@@ -100,7 +104,9 @@ impl HttpEditor {
             let body = response.text().await?;
 
             output.update_in(cx, |state, window, cx| {
-                state.set_value(body, window, cx);
+                state.set_body_content(body, window, cx);
+                state.set_status_code(Some(response.status()));
+                state.set_metrics(response.metrics().cloned());
             })?;
 
             Ok(())
@@ -158,7 +164,7 @@ impl Render for HttpEditor {
                     .child(Tab::new("Headers"))
                     .child(Tab::new("Authorization")),
             )
-            .child(TextInput::new(&self.response))
+            .child(self.response.clone())
             .track_focus(&self.focus_handle)
     }
 }
