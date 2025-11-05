@@ -12,10 +12,7 @@ use gpui_component::{
     input::{InputState, TextInput},
     tab::{Tab, TabBar},
 };
-use http_client::{
-    AsyncBody, AsyncReadResponseExt, HttpClient, Request, Response, ResponseExt,
-    config::Configurable,
-};
+use http_client::{AsyncReadResponseExt, HttpClient, Request, ResponseExt, config::Configurable};
 use workspace::{AppState, NewHttpEditor, Workspace, item::Item};
 
 use crate::{http_method_selector::HttpMethodSelector, http_response::HttpResponse};
@@ -135,13 +132,13 @@ impl HttpEditor {
 }
 
 impl Focusable for HttpEditor {
-    fn focus_handle(&self, cx: &App) -> FocusHandle {
+    fn focus_handle(&self, _cx: &App) -> FocusHandle {
         self.focus_handle.clone()
     }
 }
 
 impl Item for HttpEditor {
-    fn tab_title(&self, cx: &App) -> gpui::SharedString {
+    fn tab_title(&self, _cx: &App) -> gpui::SharedString {
         "HTTP Editor".into()
     }
 }
@@ -149,19 +146,20 @@ impl Item for HttpEditor {
 impl Render for HttpEditor {
     fn render(
         &mut self,
-        window: &mut gpui::Window,
+        _window: &mut gpui::Window,
         cx: &mut Context<Self>,
     ) -> impl gpui::IntoElement {
         div()
             .key_context("HttpEditor")
             .v_flex()
             .size_full()
+            .p_4()
+            .gap_4()
             .child(
                 div()
                     .h_flex()
                     .w_full()
                     .gap_4()
-                    .p_4()
                     .child(self.method_selector.clone())
                     .child(TextInput::new(&self.target_uri))
                     .child(

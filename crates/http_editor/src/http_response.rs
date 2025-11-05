@@ -49,7 +49,7 @@ impl HttpResponse {
         self.current_tab = index;
     }
 
-    fn render_tab(&self, cx: &mut Context<Self>) -> AnyElement {
+    fn render_tab(&self, _cx: &mut Context<Self>) -> AnyElement {
         match self.current_tab {
             0 => TextInput::new(&self.body)
                 .h_full()
@@ -64,7 +64,7 @@ impl HttpResponse {
 impl Render for HttpResponse {
     fn render(
         &mut self,
-        window: &mut Window,
+        _window: &mut Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
         v_flex()
