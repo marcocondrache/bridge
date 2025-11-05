@@ -1,12 +1,13 @@
 use gpui::{
-    App, AppContext, Context, Entity, ParentElement, Render, Styled, Window, div,
-    prelude::FluentBuilder,
+    AnyElement, App, AppContext, Context, Entity, IntoElement, ParentElement, Render, Styled,
+    Window, div, prelude::FluentBuilder,
 };
 use gpui_component::{
+    badge::Badge,
     h_flex,
     input::{InputState, TextInput},
     label::Label,
-    tab::TabBar,
+    tab::{Tab, TabBar},
     v_flex,
 };
 use http_client::StatusCode;
@@ -15,6 +16,7 @@ pub struct HttpResponse {
     body: Entity<InputState>,
     status_code: Option<StatusCode>,
     metrics: Option<http_client::Metrics>,
+    current_tab: usize,
 }
 
 impl HttpResponse {
@@ -24,6 +26,7 @@ impl HttpResponse {
             body,
             status_code: None,
             metrics: None,
+            current_tab: 0,
         });
 
         this
@@ -41,6 +44,21 @@ impl HttpResponse {
     pub fn set_metrics(&mut self, metrics: Option<http_client::Metrics>) {
         self.metrics = metrics;
     }
+
+    pub fn activate_tab(&mut self, index: usize) {
+        self.current_tab = index;
+    }
+
+    fn render_tab(&self, cx: &mut Context<Self>) -> AnyElement {
+        match self.current_tab {
+            0 => TextInput::new(&self.body)
+                .h_full()
+                .disabled(true)
+                .focus_bordered(false)
+                .into_any_element(),
+            _ => div().into_any_element(),
+        }
+    }
 }
 
 impl Render for HttpResponse {
@@ -55,12 +73,24 @@ impl Render for HttpResponse {
                 h_flex()
                     .w_full()
                     .justify_between()
-                    .child(TabBar::new(""))
+                    .child(
+                        TabBar::new("")
+                            .segmented()
+                            .selected_index(self.current_tab)
+                            .on_click(cx.listener(|view, index, _, cx| {
+                                view.activate_tab(*index);
+                                cx.notify();
+                            }))
+                            .child(Tab::new("Body"))
+                            .child(Tab::new("Cookies"))
+                            .child(Tab::new("Headers")),
+                    )
                     .child(
                         h_flex()
-                            .justify_around()
+                            .p_2()
+                            .gap_2()
                             .when_some(self.status_code.clone(), |this, code| {
-                                this.child(Label::new(code.to_string()))
+                                this.child(Badge::new().child(code.to_string()))
                             })
                             .when_some(self.metrics.clone(), |this, metrics| {
                                 let total_time = metrics.total_time();
@@ -71,6 +101,6 @@ impl Render for HttpResponse {
                             }),
                     ),
             )
-            .child(TextInput::new(&self.body).h_full())
+            .child(self.render_tab(cx))
     }
 }

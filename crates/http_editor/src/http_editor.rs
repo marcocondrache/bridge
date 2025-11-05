@@ -45,6 +45,7 @@ pub struct HttpEditor {
     method_selector: Entity<HttpMethodSelector>,
     response: Entity<HttpResponse>,
     executing_task: Option<Task<Result<()>>>,
+    current_tab: usize,
 }
 
 impl HttpEditor {
@@ -59,6 +60,7 @@ impl HttpEditor {
             method_selector,
             focus_handle: cx.focus_handle(),
             executing_task: None,
+            current_tab: 0,
         }
     }
 
@@ -70,6 +72,10 @@ impl HttpEditor {
         let item = Box::new(cx.new(|cx| Self::new(window, cx)));
 
         workspace.add_item(item, window, cx);
+    }
+
+    fn activate_tab(&mut self, index: usize) {
+        self.current_tab = index;
     }
 
     fn build_request<T>(&self, cx: &mut Context<Self>, body: T) -> Result<Request<T>> {
@@ -150,7 +156,6 @@ impl Render for HttpEditor {
             .key_context("HttpEditor")
             .v_flex()
             .size_full()
-            .gap_4()
             .child(
                 div()
                     .h_flex()
@@ -179,7 +184,12 @@ impl Render for HttpEditor {
             )
             .child(
                 TabBar::new("Tabs")
-                    .selected_index(0)
+                    .segmented()
+                    .selected_index(self.current_tab)
+                    .on_click(cx.listener(|view, index, _, cx| {
+                        view.activate_tab(*index);
+                        cx.notify();
+                    }))
                     .child(Tab::new("Parameters"))
                     .child(Tab::new("Body"))
                     .child(Tab::new("Headers"))
