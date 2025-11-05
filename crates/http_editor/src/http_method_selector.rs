@@ -1,5 +1,8 @@
 use gpui::http_client::{Method, http};
-use gpui::{Context, InteractiveElement, IntoElement, ParentElement, Render, Window, actions, div};
+use gpui::{
+    App, AppContext, Context, Entity, InteractiveElement, IntoElement, ParentElement, Render,
+    Window, actions, div,
+};
 use gpui_component::Sizable;
 use gpui_component::button::Button;
 use gpui_component::popup_menu::PopupMenuExt;
@@ -14,10 +17,12 @@ pub struct HttpMethodSelector {
 }
 
 impl HttpMethodSelector {
-    pub fn new() -> Self {
-        Self {
+    pub fn new(cx: &mut App) -> Entity<Self> {
+        let this = cx.new(|_| Self {
             method: http::Method::GET,
-        }
+        });
+
+        this
     }
 
     pub fn method(&self) -> http::Method {

@@ -1,22 +1,22 @@
 mod http_method_selector;
-mod http_response;
-mod http_target;
 
+use anyhow::{Ok, Result};
 use gpui::{
     App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, ParentElement,
-    Render, Styled, Window, div,
+    Render, Styled, Task, WeakEntity, Window, div,
 };
 use gpui_component::{
     StyledExt,
     button::{Button, ButtonVariants},
+    input::{InputState, TextInput},
     tab::{Tab, TabBar},
 };
-use http_client::{HttpClient, Request};
+use http_client::{
+    AsyncBody, AsyncReadResponseExt, HttpClient, Request, Response, config::Configurable,
+};
 use workspace::{AppState, NewHttpEditor, Workspace, item::Item};
 
-use crate::{
-    http_method_selector::HttpMethodSelector, http_response::HttpResponse, http_target::HttpTarget,
-};
+use crate::http_method_selector::HttpMethodSelector;
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, window, cx| {
@@ -39,22 +39,24 @@ pub fn init(cx: &mut App) {
 
 pub struct HttpEditor {
     focus_handle: FocusHandle,
-    target_uri: Entity<HttpTarget>,
+    target_uri: Entity<InputState>,
     method_selector: Entity<HttpMethodSelector>,
-    response: Entity<HttpResponse>,
+    response: Entity<InputState>,
+    executing_task: Option<Task<Result<Response<AsyncBody>, http_client::Error>>>,
 }
 
 impl HttpEditor {
     pub fn new(window: &mut Window, cx: &mut App) -> Self {
-        let method_selector = cx.new(|_cx| HttpMethodSelector::new());
-        let target_uri = cx.new(|cx| HttpTarget::new(window, cx));
-        let response = cx.new(|cx| HttpResponse::new(window, cx));
+        let method_selector = HttpMethodSelector::new(cx);
+        let target_uri = cx.new(|cx| InputState::new(window, cx));
+        let response = cx.new(|cx| InputState::new(window, cx).code_editor(""));
 
         Self {
             target_uri,
             method_selector,
             response,
             focus_handle: cx.focus_handle(),
+            executing_task: None,
         }
     }
 
@@ -68,18 +70,44 @@ impl HttpEditor {
         workspace.add_item(item, window, cx);
     }
 
-    fn send(&self, cx: &mut Context<Self>) {
-        let client = HttpClient::global(cx);
+    fn build_request<T>(&self, cx: &mut Context<Self>, body: T) -> Result<Request<T>> {
         let method = self.method_selector.read(cx).method();
-        let uri = self.target_uri.read_with(cx, |this, cx| this.url(cx));
+        let uri = self
+            .target_uri
+            .read_with(cx, |this, _cx| this.value())
+            .to_string();
 
-        cx.background_spawn(async move {
-            let request = Request::builder().method(method).uri(uri).body(()).unwrap();
-            let response = client.send(request).await;
+        Request::builder()
+            .method(method)
+            .uri(uri)
+            .automatic_decompression(true)
+            .body(body)
+            .map_err(|e| e.into())
+    }
 
-            println!("{:?}", response);
+    fn send_request(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Result<()> {
+        let client = HttpClient::global(cx);
+        let request = self.build_request(cx, ())?;
+        let output = self.response.clone();
+
+        cx.spawn_in(window, async move |this, mut cx| {
+            let mut response = cx
+                .update(|_window, cx| {
+                    cx.background_spawn(async move { client.send(request).await })
+                })?
+                .await?;
+
+            let body = response.text().await?;
+
+            output.update_in(cx, |state, window, cx| {
+                state.set_value(body, window, cx);
+            })?;
+
+            Ok(())
         })
         .detach();
+
+        Ok(())
     }
 }
 
@@ -112,13 +140,13 @@ impl Render for HttpEditor {
                     .w_full()
                     .gap_4()
                     .child(self.method_selector.clone())
-                    .child(self.target_uri.clone())
+                    .child(TextInput::new(&self.target_uri))
                     .child(
                         Button::new("Send")
                             .label("Send")
                             .primary()
-                            .on_click(cx.listener(move |this, _, _window, cx| {
-                                this.send(cx);
+                            .on_click(cx.listener(move |this, _, window, cx| {
+                                let _ = this.send_request(window, cx);
                             })),
                     ),
             )
@@ -130,7 +158,7 @@ impl Render for HttpEditor {
                     .child(Tab::new("Headers"))
                     .child(Tab::new("Authorization")),
             )
-            .child(self.response.clone())
+            .child(TextInput::new(&self.response))
             .track_focus(&self.focus_handle)
     }
 }
