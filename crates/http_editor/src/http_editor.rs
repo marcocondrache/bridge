@@ -71,8 +71,20 @@ impl HttpEditor {
         workspace.add_item(item, window, cx);
     }
 
+    pub fn is_executing(&self) -> bool {
+        self.executing_task.is_some()
+    }
+
     fn activate_tab(&mut self, index: usize) {
         self.current_tab = index;
+    }
+
+    fn handle_request(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.executing_task.is_none() {
+            let _ = self.send_request(window, cx);
+        } else {
+            self.cancel_request(cx);
+        }
     }
 
     fn build_request<T>(&self, cx: &mut Context<Self>, body: T) -> Result<Request<T>> {
@@ -164,19 +176,13 @@ impl Render for HttpEditor {
                     .child(TextInput::new(&self.target_uri))
                     .child(
                         Button::new("execute")
-                            .map(|this| {
-                                if self.executing_task.is_none() {
-                                    this.label("Send").primary()
-                                } else {
-                                    this.label("Cancel")
-                                }
-                            })
+                            .when_else(
+                                self.is_executing(),
+                                |this| this.label("Cancel"),
+                                |this| this.label("Send").primary(),
+                            )
                             .on_click(cx.listener(move |this, _, window, cx| {
-                                if this.executing_task.is_none() {
-                                    let _ = this.send_request(window, cx);
-                                } else {
-                                    this.cancel_request(cx);
-                                }
+                                this.handle_request(window, cx);
                             })),
                     ),
             )

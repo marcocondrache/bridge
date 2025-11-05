@@ -69,6 +69,7 @@ impl Render for HttpResponse {
     ) -> impl gpui::IntoElement {
         v_flex()
             .h_full()
+            .gap_2()
             .child(
                 h_flex()
                     .w_full()
