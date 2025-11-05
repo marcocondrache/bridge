@@ -56,9 +56,20 @@ impl Render for HttpResponse {
                     .w_full()
                     .justify_between()
                     .child(TabBar::new(""))
-                    .child(h_flex().when_some(self.status_code.clone(), |this, code| {
-                        this.child(Label::new(code.to_string()))
-                    })),
+                    .child(
+                        h_flex()
+                            .justify_around()
+                            .when_some(self.status_code.clone(), |this, code| {
+                                this.child(Label::new(code.to_string()))
+                            })
+                            .when_some(self.metrics.clone(), |this, metrics| {
+                                let total_time = metrics.total_time();
+
+                                this.child(Label::new(
+                                    humantime::format_duration(total_time).to_string(),
+                                ))
+                            }),
+                    ),
             )
             .child(TextInput::new(&self.body).h_full())
     }

@@ -4,7 +4,7 @@ mod http_response;
 use anyhow::{Ok, Result};
 use gpui::{
     App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, ParentElement,
-    Render, Styled, Task, Window, div,
+    Render, Styled, Task, Window, div, prelude::FluentBuilder,
 };
 use gpui_component::{
     StyledExt,
@@ -44,7 +44,7 @@ pub struct HttpEditor {
     target_uri: Entity<InputState>,
     method_selector: Entity<HttpMethodSelector>,
     response: Entity<HttpResponse>,
-    executing_task: Option<Task<Result<Response<AsyncBody>, http_client::Error>>>,
+    executing_task: Option<Task<Result<()>>>,
 }
 
 impl HttpEditor {
@@ -89,12 +89,18 @@ impl HttpEditor {
             .map_err(|e| e.into())
     }
 
+    fn cancel_request(&mut self, cx: &mut Context<Self>) {
+        if let Some(_) = self.executing_task.take() {
+            cx.notify();
+        }
+    }
+
     fn send_request(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Result<()> {
         let client = HttpClient::global(cx);
         let request = self.build_request(cx, ())?;
         let output = self.response.clone();
 
-        cx.spawn_in(window, async move |_this, cx| {
+        self.executing_task = Some(cx.spawn_in(window, async move |this, cx| {
             let mut response = cx
                 .update(|_window, cx| {
                     cx.background_spawn(async move { client.send(request).await })
@@ -109,9 +115,14 @@ impl HttpEditor {
                 state.set_metrics(response.metrics().cloned());
             })?;
 
+            this.update(cx, |state, _cx| {
+                state.executing_task = None;
+            })?;
+
             Ok(())
-        })
-        .detach();
+        }));
+
+        cx.notify();
 
         Ok(())
     }
@@ -145,14 +156,24 @@ impl Render for HttpEditor {
                     .h_flex()
                     .w_full()
                     .gap_4()
+                    .p_4()
                     .child(self.method_selector.clone())
                     .child(TextInput::new(&self.target_uri))
                     .child(
-                        Button::new("Send")
-                            .label("Send")
-                            .primary()
+                        Button::new("execute")
+                            .map(|this| {
+                                if self.executing_task.is_none() {
+                                    this.label("Send").primary()
+                                } else {
+                                    this.label("Cancel")
+                                }
+                            })
                             .on_click(cx.listener(move |this, _, window, cx| {
-                                let _ = this.send_request(window, cx);
+                                if this.executing_task.is_none() {
+                                    let _ = this.send_request(window, cx);
+                                } else {
+                                    this.cancel_request(cx);
+                                }
                             })),
                     ),
             )

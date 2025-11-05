@@ -2749,6 +2749,7 @@ dependencies = [
  "gpui-component",
  "gpui-macros",
  "http_client",
+ "humantime",
  "serde",
  "workspace",
 ]
