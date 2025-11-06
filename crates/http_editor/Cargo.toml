@@ -16,3 +16,5 @@ anyhow.workspace = true
 workspace.workspace = true
 http_client.workspace = true
 humantime.workspace = true
+url.workspace = true
+regex.workspace = true

@@ -1,11 +1,11 @@
 mod http_headers;
 mod http_method_selector;
-mod http_response;
+mod response_viewer;
 
 use anyhow::{Ok, Result};
 use gpui::{
-    App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, ParentElement,
-    Render, Styled, Task, Window, div, prelude::FluentBuilder,
+    App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, IntoElement,
+    ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder,
 };
 use gpui_component::{
     StyledExt,
@@ -13,10 +13,10 @@ use gpui_component::{
     input::{InputState, TextInput},
     tab::{Tab, TabBar},
 };
-use http_client::{AsyncReadResponseExt, HttpClient, Request, ResponseExt, config::Configurable};
+use http_client::{HttpClient, Request, config::Configurable};
 use workspace::{AppState, NewHttpEditor, Workspace, item::Item};
 
-use crate::{http_method_selector::HttpMethodSelector, http_response::HttpResponse};
+use crate::{http_method_selector::HttpMethodSelector, response_viewer::ResponseViewer};
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, window, cx| {
@@ -38,23 +38,22 @@ pub fn init(cx: &mut App) {
 }
 
 pub struct HttpEditor {
-    focus_handle: FocusHandle,
-    target_uri: Entity<InputState>,
+    url_input: Entity<InputState>,
     method_selector: Entity<HttpMethodSelector>,
-    response: Entity<HttpResponse>,
+    response_viewer: Option<Entity<ResponseViewer>>,
     executing_task: Option<Task<Result<()>>>,
     current_tab: usize,
+    focus_handle: FocusHandle,
 }
 
 impl HttpEditor {
     pub fn new(window: &mut Window, cx: &mut App) -> Self {
-        let response = HttpResponse::new(window, cx);
         let method_selector = HttpMethodSelector::new(cx);
         let target_uri = cx.new(|cx| InputState::new(window, cx));
 
         Self {
-            response,
-            target_uri,
+            response_viewer: None,
+            url_input: target_uri,
             method_selector,
             focus_handle: cx.focus_handle(),
             executing_task: None,
@@ -76,6 +75,10 @@ impl HttpEditor {
         self.executing_task.is_some()
     }
 
+    fn render_tab(&self, _cx: &mut Context<Self>) -> impl IntoElement {
+        div().child("Tab")
+    }
+
     fn activate_tab(&mut self, index: usize) {
         self.current_tab = index;
     }
@@ -91,7 +94,7 @@ impl HttpEditor {
     fn build_request<T>(&self, cx: &mut Context<Self>, body: T) -> Result<Request<T>> {
         let method = self.method_selector.read(cx).method();
         let uri = self
-            .target_uri
+            .url_input
             .read_with(cx, |this, _cx| this.value())
             .to_string();
 
@@ -114,30 +117,24 @@ impl HttpEditor {
     fn send_request(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Result<()> {
         let client = HttpClient::global(cx);
         let request = self.build_request(cx, ())?;
-        let output = self.response.clone();
 
         self.executing_task = Some(cx.spawn_in(window, async move |this, cx| {
-            let mut response = cx
+            let response = cx
                 .update(|_window, cx| {
                     cx.background_spawn(async move { client.send(request).await })
                 })?
                 .await?;
 
-            let size = response.body().len();
-            let body = response.text().await?;
+            this.update_in(cx, |this, window, cx| {
+                if let Some(viewer) = &this.response_viewer {
+                    viewer.update(cx, |viewer, cx| {
+                        viewer.update_response(response, window, cx);
+                    })
+                } else {
+                    this.response_viewer = Some(ResponseViewer::new(response, window, cx));
+                }
 
-            let headers = response.headers().clone();
-
-            output.update_in(cx, |state, window, cx| {
-                state.set_size(size);
-                state.set_body_content(body, window, cx);
-                state.set_headers(headers, cx);
-                state.set_status_code(Some(response.status()));
-                state.set_metrics(response.metrics().cloned());
-            })?;
-
-            this.update(cx, |state, _cx| {
-                state.executing_task = None;
+                this.executing_task = None;
             })?;
 
             Ok(())
@@ -146,6 +143,26 @@ impl HttpEditor {
         cx.notify();
 
         Ok(())
+    }
+
+    fn render_request_section(&self, cx: &Context<Self>) -> impl IntoElement {
+        div()
+            .h_flex()
+            .w_full()
+            .gap_4()
+            .child(self.method_selector.clone())
+            .child(TextInput::new(&self.url_input))
+            .child(
+                Button::new("execute")
+                    .when_else(
+                        self.is_executing(),
+                        |this| this.label("Cancel"),
+                        |this| this.label("Send").primary(),
+                    )
+                    .on_click(cx.listener(move |this, _, window, cx| {
+                        this.handle_request(window, cx);
+                    })),
+            )
     }
 }
 
@@ -173,25 +190,7 @@ impl Render for HttpEditor {
             .size_full()
             .p_4()
             .gap_4()
-            .child(
-                div()
-                    .h_flex()
-                    .w_full()
-                    .gap_4()
-                    .child(self.method_selector.clone())
-                    .child(TextInput::new(&self.target_uri))
-                    .child(
-                        Button::new("execute")
-                            .when_else(
-                                self.is_executing(),
-                                |this| this.label("Cancel"),
-                                |this| this.label("Send").primary(),
-                            )
-                            .on_click(cx.listener(move |this, _, window, cx| {
-                                this.handle_request(window, cx);
-                            })),
-                    ),
-            )
+            .child(self.render_request_section(cx))
             .child(
                 TabBar::new("Tabs")
                     .segmented()
@@ -205,7 +204,10 @@ impl Render for HttpEditor {
                     .child(Tab::new("Headers"))
                     .child(Tab::new("Authorization")),
             )
-            .child(self.response.clone())
+            .child(self.render_tab(cx))
+            .when_some(self.response_viewer.as_ref(), |this, viewer| {
+                this.child(viewer.clone())
+            })
             .track_focus(&self.focus_handle)
     }
 }

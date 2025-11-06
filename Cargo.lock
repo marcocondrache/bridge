@@ -2750,7 +2750,9 @@ dependencies = [
  "gpui-macros",
  "http_client",
  "humantime",
+ "regex",
  "serde",
+ "url",
  "workspace",
 ]
 
