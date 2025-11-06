@@ -71,28 +71,36 @@ impl Focusable for ResponseViewer {
 }
 
 impl ResponseViewer {
-    pub fn new(response: Response<AsyncBody>, window: &mut Window, cx: &mut App) -> Entity<Self> {
+    pub fn new(
+        body: String,
+        response: Response<AsyncBody>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let focus_handle = cx.focus_handle();
-        let body = cx.new(|cx| InputState::new(window, cx).code_editor("").multi_line());
+        let body = cx.new(|cx| InputState::new(window, cx).multi_line().default_value(body));
         let headers = cx.new(|cx| Table::new(HttpHeaders::new(), window, cx));
-        let this = cx.new(|_cx| Self {
+
+        Self {
             body,
             headers,
             active_tab: ResponseTab::default(),
             focus_handle,
             response,
-        });
-
-        this
+        }
     }
 
     pub fn update_response(
         &mut self,
+        body: String,
         response: Response<AsyncBody>,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         self.response = response;
+        self.body.update(cx, |editor, cx| {
+            editor.set_value(body, window, cx);
+        });
 
         cx.notify();
     }

@@ -12,11 +12,11 @@ actions!(
     [Get, Post, Put, Delete, Patch, Options]
 );
 
-pub struct HttpMethodSelector {
+pub struct MethodSelector {
     method: http::Method,
 }
 
-impl HttpMethodSelector {
+impl MethodSelector {
     pub fn new(cx: &mut App) -> Entity<Self> {
         let this = cx.new(|_| Self {
             method: http::Method::GET,
@@ -60,7 +60,7 @@ impl HttpMethodSelector {
     }
 }
 
-impl Render for HttpMethodSelector {
+impl Render for MethodSelector {
     fn render(&mut self, _window: &mut gpui::Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .on_action(cx.listener(Self::get))

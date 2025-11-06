@@ -1,8 +1,8 @@
 mod http_headers;
-mod http_method_selector;
+mod method_selector;
 mod response_viewer;
 
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use gpui::{
     App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, IntoElement,
     ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder,
@@ -13,10 +13,10 @@ use gpui_component::{
     input::{InputState, TextInput},
     tab::{Tab, TabBar},
 };
-use http_client::{HttpClient, Request, config::Configurable};
+use http_client::{AsyncReadResponseExt, HttpClient, Request, config::Configurable};
 use workspace::{AppState, NewHttpEditor, Workspace, item::Item};
 
-use crate::{http_method_selector::HttpMethodSelector, response_viewer::ResponseViewer};
+use crate::{method_selector::MethodSelector, response_viewer::ResponseViewer};
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, window, cx| {
@@ -37,18 +37,70 @@ pub fn init(cx: &mut App) {
     });
 }
 
+#[derive(Clone, Copy, Default)]
+#[repr(usize)]
+pub enum HttpEditorTab {
+    #[default]
+    Parameters,
+    Headers,
+    Body,
+    Authorization,
+}
+
+impl HttpEditorTab {
+    pub fn all() -> [Self; 4] {
+        [
+            HttpEditorTab::Parameters,
+            HttpEditorTab::Headers,
+            HttpEditorTab::Body,
+            HttpEditorTab::Authorization,
+        ]
+    }
+}
+
+impl From<HttpEditorTab> for usize {
+    fn from(value: HttpEditorTab) -> Self {
+        value as usize
+    }
+}
+
+impl TryFrom<usize> for HttpEditorTab {
+    type Error = ();
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(HttpEditorTab::Parameters),
+            1 => Ok(HttpEditorTab::Headers),
+            2 => Ok(HttpEditorTab::Body),
+            3 => Ok(HttpEditorTab::Authorization),
+            _ => Err(()),
+        }
+    }
+}
+
+impl From<HttpEditorTab> for Tab {
+    fn from(value: HttpEditorTab) -> Self {
+        match value {
+            HttpEditorTab::Body => Tab::new("Body"),
+            HttpEditorTab::Headers => Tab::new("Headers"),
+            HttpEditorTab::Parameters => Tab::new("Parameters"),
+            HttpEditorTab::Authorization => Tab::new("Authorization"),
+        }
+    }
+}
+
 pub struct HttpEditor {
     url_input: Entity<InputState>,
-    method_selector: Entity<HttpMethodSelector>,
+    method_selector: Entity<MethodSelector>,
     response_viewer: Option<Entity<ResponseViewer>>,
     executing_task: Option<Task<Result<()>>>,
-    current_tab: usize,
+    active_tab: HttpEditorTab,
     focus_handle: FocusHandle,
 }
 
 impl HttpEditor {
     pub fn new(window: &mut Window, cx: &mut App) -> Self {
-        let method_selector = HttpMethodSelector::new(cx);
+        let method_selector = MethodSelector::new(cx);
         let target_uri = cx.new(|cx| InputState::new(window, cx));
 
         Self {
@@ -57,7 +109,7 @@ impl HttpEditor {
             method_selector,
             focus_handle: cx.focus_handle(),
             executing_task: None,
-            current_tab: 0,
+            active_tab: HttpEditorTab::default(),
         }
     }
 
@@ -79,8 +131,10 @@ impl HttpEditor {
         div().child("Tab")
     }
 
-    fn activate_tab(&mut self, index: usize) {
-        self.current_tab = index;
+    fn activate_tab(&mut self, index: usize, cx: &mut Context<Self>) {
+        self.active_tab = HttpEditorTab::try_from(index).unwrap_or_default();
+
+        cx.notify();
     }
 
     fn handle_request(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -119,19 +173,26 @@ impl HttpEditor {
         let request = self.build_request(cx, ())?;
 
         self.executing_task = Some(cx.spawn_in(window, async move |this, cx| {
-            let response = cx
+            let (response, body) = cx
                 .update(|_window, cx| {
-                    cx.background_spawn(async move { client.send(request).await })
+                    cx.background_spawn(async move {
+                        let mut response = client.send(request).await?;
+                        let body = response.text().await?;
+
+                        Ok::<_, anyhow::Error>((response, body))
+                    })
                 })?
                 .await?;
 
             this.update_in(cx, |this, window, cx| {
                 if let Some(viewer) = &this.response_viewer {
                     viewer.update(cx, |viewer, cx| {
-                        viewer.update_response(response, window, cx);
+                        viewer.update_response(body, response, window, cx);
                     })
                 } else {
-                    this.response_viewer = Some(ResponseViewer::new(response, window, cx));
+                    let viewer = cx.new(|cx| ResponseViewer::new(body, response, window, cx));
+
+                    this.response_viewer = Some(viewer);
                 }
 
                 this.executing_task = None;
@@ -194,15 +255,11 @@ impl Render for HttpEditor {
             .child(
                 TabBar::new("Tabs")
                     .segmented()
-                    .selected_index(self.current_tab)
-                    .on_click(cx.listener(|view, index, _, cx| {
-                        view.activate_tab(*index);
-                        cx.notify();
+                    .selected_index(self.active_tab.into())
+                    .on_click(cx.listener(|this, index, _, cx| {
+                        this.activate_tab(*index, cx);
                     }))
-                    .child(Tab::new("Parameters"))
-                    .child(Tab::new("Body"))
-                    .child(Tab::new("Headers"))
-                    .child(Tab::new("Authorization")),
+                    .children(HttpEditorTab::all()),
             )
             .child(self.render_tab(cx))
             .when_some(self.response_viewer.as_ref(), |this, viewer| {
