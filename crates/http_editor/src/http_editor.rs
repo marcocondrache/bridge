@@ -1,3 +1,4 @@
+mod http_headers;
 mod http_method_selector;
 mod http_response;
 
@@ -122,10 +123,15 @@ impl HttpEditor {
                 })?
                 .await?;
 
+            let size = response.body().len();
             let body = response.text().await?;
 
+            let headers = response.headers().clone();
+
             output.update_in(cx, |state, window, cx| {
+                state.set_size(size);
                 state.set_body_content(body, window, cx);
+                state.set_headers(headers, cx);
                 state.set_status_code(Some(response.status()));
                 state.set_metrics(response.metrics().cloned());
             })?;
