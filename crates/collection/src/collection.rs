@@ -1,5 +1,4 @@
-use gpui::{Render, div};
-use gpui_component::Placement;
+use gpui::{ParentElement, Render, Styled, div, px};
 use workspace::dock::Panel;
 
 pub struct Collection {}
@@ -7,10 +6,6 @@ pub struct Collection {}
 impl Panel for Collection {
     fn priority(&self) -> u32 {
         0
-    }
-
-    fn placement(&self) -> Placement {
-        Placement::Left
     }
 }
 
@@ -20,6 +15,6 @@ impl Render for Collection {
         window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
-        div()
+        div().h_full().w(px(200.0)).child("test")
     }
 }

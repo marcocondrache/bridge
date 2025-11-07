@@ -30,7 +30,14 @@ pub fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) {
         let collection_panel = cx.new(|_| Collection {}).unwrap();
 
         handle.update_in(cx, |workspace, window, cx| {
-            workspace.add_panel(collection_panel, window, cx);
+            let index = workspace.add_panel(
+                collection_panel,
+                gpui_component::Placement::Left,
+                window,
+                cx,
+            );
+
+            workspace.activate_panel(index, gpui_component::Placement::Left, cx);
         })
     })
     .detach();

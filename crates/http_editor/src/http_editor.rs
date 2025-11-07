@@ -1,22 +1,27 @@
-mod http_headers;
+mod headers_table;
 mod method_selector;
+mod query_table;
 mod response_viewer;
 
 use anyhow::Result;
 use gpui::{
-    App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, IntoElement,
-    ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder,
+    AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement,
+    IntoElement, ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder,
 };
 use gpui_component::{
     StyledExt,
     button::{Button, ButtonVariants},
     input::{InputState, TextInput},
     tab::{Tab, TabBar},
+    table::Table,
 };
 use http_client::{AsyncReadResponseExt, HttpClient, Request, config::Configurable};
-use workspace::{AppState, NewHttpEditor, Workspace, item::Item};
+use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
-use crate::{method_selector::MethodSelector, response_viewer::ResponseViewer};
+use crate::{
+    headers_table::HeadersTableDelegate, method_selector::MethodSelector,
+    query_table::QueryTableDelegate, response_viewer::ResponseViewer,
+};
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, window, cx| {
@@ -41,7 +46,7 @@ pub fn init(cx: &mut App) {
 #[repr(usize)]
 pub enum HttpEditorTab {
     #[default]
-    Parameters,
+    Query,
     Headers,
     Body,
     Authorization,
@@ -50,7 +55,7 @@ pub enum HttpEditorTab {
 impl HttpEditorTab {
     pub fn all() -> [Self; 4] {
         [
-            HttpEditorTab::Parameters,
+            HttpEditorTab::Query,
             HttpEditorTab::Headers,
             HttpEditorTab::Body,
             HttpEditorTab::Authorization,
@@ -69,7 +74,7 @@ impl TryFrom<usize> for HttpEditorTab {
 
     fn try_from(value: usize) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(HttpEditorTab::Parameters),
+            0 => Ok(HttpEditorTab::Query),
             1 => Ok(HttpEditorTab::Headers),
             2 => Ok(HttpEditorTab::Body),
             3 => Ok(HttpEditorTab::Authorization),
@@ -83,7 +88,7 @@ impl From<HttpEditorTab> for Tab {
         match value {
             HttpEditorTab::Body => Tab::new("Body"),
             HttpEditorTab::Headers => Tab::new("Headers"),
-            HttpEditorTab::Parameters => Tab::new("Parameters"),
+            HttpEditorTab::Query => Tab::new("Query"),
             HttpEditorTab::Authorization => Tab::new("Authorization"),
         }
     }
@@ -94,7 +99,9 @@ pub struct HttpEditor {
     method_selector: Entity<MethodSelector>,
     response_viewer: Option<Entity<ResponseViewer>>,
     executing_task: Option<Task<Result<()>>>,
-    active_tab: HttpEditorTab,
+    query_table: Entity<Table<QueryTableDelegate>>,
+    headers_table: Entity<Table<HeadersTableDelegate>>,
+    current_tab: HttpEditorTab,
     focus_handle: FocusHandle,
 }
 
@@ -102,14 +109,19 @@ impl HttpEditor {
     pub fn new(window: &mut Window, cx: &mut App) -> Self {
         let method_selector = MethodSelector::new(cx);
         let target_uri = cx.new(|cx| InputState::new(window, cx));
+        let query_table = cx.new(|cx| Table::new(QueryTableDelegate::new(), window, cx));
+        let headers_table =
+            cx.new(|cx| Table::new(HeadersTableDelegate::new_editable(), window, cx));
 
         Self {
             response_viewer: None,
             url_input: target_uri,
             method_selector,
+            query_table,
+            headers_table,
             focus_handle: cx.focus_handle(),
             executing_task: None,
-            active_tab: HttpEditorTab::default(),
+            current_tab: HttpEditorTab::default(),
         }
     }
 
@@ -127,12 +139,16 @@ impl HttpEditor {
         self.executing_task.is_some()
     }
 
-    fn render_tab(&self, _cx: &mut Context<Self>) -> impl IntoElement {
-        div().child("Tab")
+    fn render_tab(&self, _cx: &mut Context<Self>) -> AnyElement {
+        match self.current_tab {
+            HttpEditorTab::Query => self.query_table.clone().into_any_element(),
+            HttpEditorTab::Headers => self.headers_table.clone().into_any_element(),
+            _ => div().into_any_element(),
+        }
     }
 
     fn activate_tab(&mut self, index: usize, cx: &mut Context<Self>) {
-        self.active_tab = HttpEditorTab::try_from(index).unwrap_or_default();
+        self.current_tab = HttpEditorTab::try_from(index).unwrap_or_default();
 
         cx.notify();
     }
@@ -190,9 +206,8 @@ impl HttpEditor {
                         viewer.update_response(body, response, window, cx);
                     })
                 } else {
-                    let viewer = cx.new(|cx| ResponseViewer::new(body, response, window, cx));
-
-                    this.response_viewer = Some(viewer);
+                    this.response_viewer =
+                        Some(cx.new(|cx| ResponseViewer::new(body, response, window, cx)));
                 }
 
                 this.executing_task = None;
@@ -255,7 +270,7 @@ impl Render for HttpEditor {
             .child(
                 TabBar::new("Tabs")
                     .segmented()
-                    .selected_index(self.active_tab.into())
+                    .selected_index(self.current_tab.into())
                     .on_click(cx.listener(|this, index, _, cx| {
                         this.activate_tab(*index, cx);
                     }))

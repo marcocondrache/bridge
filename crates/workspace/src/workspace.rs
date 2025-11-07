@@ -1,22 +1,20 @@
 pub mod area;
 pub mod dock;
-pub mod item;
 
 use std::sync::{Arc, Weak};
 
 use anyhow::Ok;
 use gpui::{
-    Action, AnyView, App, AppContext, Context, Div, Entity, Global, InteractiveElement, KeyContext,
-    ParentElement, Render, Styled, Subscription, Task, WeakEntity, Window, WindowHandle,
-    WindowOptions, actions, div,
+    Action, AnyView, App, AppContext, Context, Div, Entity, Global, InteractiveElement,
+    ParentElement, Render, Styled, Subscription, Task, Window, WindowHandle, WindowOptions,
+    actions, div,
 };
-use gpui_component::{ActiveTheme, Placement, Root};
+use gpui_component::{ActiveTheme, Placement, Root, dock::DockArea};
 use uuid::Uuid;
 
 use crate::{
-    area::Area,
-    dock::{Dock, Panel, PanelHandle},
-    item::ItemHandle,
+    area::{Area, ItemHandle},
+    dock::{Dock, Panel},
 };
 
 actions!(workspace, [NewHttpEditor, NewWindow]);
@@ -74,15 +72,13 @@ impl Workspace {
     pub fn add_panel<T: Panel>(
         &mut self,
         panel: Entity<T>,
+        placement: Placement,
         window: &mut Window,
         cx: &mut Context<Self>,
-    ) {
-        let placement = panel.placement(window, cx);
+    ) -> usize {
         let dock = self.dock_at_placement(placement);
 
-        dock.update(cx, |dock, cx| {
-            dock.add_panel(panel, cx);
-        })
+        dock.update(cx, |dock, cx| dock.add_panel(panel, cx))
     }
 
     pub fn add_item(
@@ -94,6 +90,14 @@ impl Workspace {
         self.center.update(cx, |area, cx| {
             area.add_item(item, window, cx);
         });
+    }
+
+    pub fn activate_panel(&mut self, index: usize, placement: Placement, cx: &mut Context<Self>) {
+        let dock = self.dock_at_placement(placement);
+
+        dock.update(cx, |dock, cx| {
+            dock.display_panel(index, cx);
+        })
     }
 
     pub fn register_action<A: Action>(
@@ -183,7 +187,8 @@ impl Render for Workspace {
         window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
-        let theme = cx.theme().clone();
+        let modal_layer = Root::render_modal_layer(window, cx);
+        let notification_layer = Root::render_notification_layer(window, cx);
 
         self.actions(div(), window, cx)
             .id("root")
@@ -191,47 +196,24 @@ impl Render for Workspace {
             .size_full()
             .flex()
             .flex_col()
-            .justify_start()
-            .items_start()
-            .text_color(theme.foreground)
-            .overflow_hidden()
             .children(self.titlebar_item.clone())
             .child(
                 div()
-                    .id("workspace")
-                    .bg(theme.background)
-                    .relative()
-                    .flex_1()
-                    .w_full()
                     .flex()
-                    .flex_col()
-                    .overflow_hidden()
-                    .border_t_1()
-                    .border_b_1()
-                    .border_color(theme.border)
+                    .flex_row()
+                    .h_full()
                     .child(
                         div()
                             .flex()
-                            .flex_row()
-                            .h_full()
-                            .children(self.render_dock(&self.right_dock))
-                            .child(
-                                div()
-                                    .flex()
-                                    .flex_col()
-                                    .flex_1()
-                                    .overflow_hidden()
-                                    .child(
-                                        div()
-                                            .flex()
-                                            .flex_row()
-                                            .items_center()
-                                            .flex_1()
-                                            .child(self.center.clone()),
-                                    )
-                                    .children(self.render_dock(&self.bottom_dock)),
-                            ),
-                    ),
+                            .flex_1()
+                            .flex_col()
+                            .overflow_hidden()
+                            .child(self.center.clone())
+                            .child(self.bottom_dock.clone()),
+                    )
+                    .child(div().flex().flex_none().child(self.right_dock.clone())),
             )
+            .children(modal_layer)
+            .children(notification_layer)
     }
 }

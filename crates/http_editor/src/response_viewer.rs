@@ -1,6 +1,6 @@
 use gpui::{
     AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, IntoElement,
-    ParentElement, Render, Styled, Window, prelude::FluentBuilder,
+    ParentElement, Render, SharedString, Styled, Window, prelude::FluentBuilder,
 };
 use gpui_component::{
     badge::Badge,
@@ -9,11 +9,12 @@ use gpui_component::{
     label::Label,
     tab::{Tab, TabBar},
     table::Table,
+    tag::Tag,
     v_flex,
 };
 use http_client::{AsyncBody, Response, ResponseExt};
 
-use crate::http_headers::HttpHeaders;
+use crate::headers_table::HeadersTableDelegate;
 
 #[derive(Clone, Copy, Default)]
 #[repr(usize)]
@@ -57,7 +58,7 @@ impl From<ResponseTab> for Tab {
 }
 
 pub struct ResponseViewer {
-    headers: Entity<Table<HttpHeaders>>,
+    headers: Entity<Table<HeadersTableDelegate>>,
     body: Entity<InputState>,
     active_tab: ResponseTab,
     focus_handle: FocusHandle,
@@ -77,9 +78,16 @@ impl ResponseViewer {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
+        let headers = response.headers().clone();
+
         let focus_handle = cx.focus_handle();
-        let body = cx.new(|cx| InputState::new(window, cx).multi_line().default_value(body));
-        let headers = cx.new(|cx| Table::new(HttpHeaders::new(), window, cx));
+        let headers = cx.new(|cx| Table::new(HeadersTableDelegate::new(headers), window, cx));
+        let body = cx.new(|cx| {
+            InputState::new(window, cx)
+                .code_editor("html")
+                .indent_guides(false)
+                .default_value(body)
+        });
 
         Self {
             body,
@@ -97,9 +105,15 @@ impl ResponseViewer {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        let headers = response.headers().clone();
+
         self.response = response;
         self.body.update(cx, |editor, cx| {
             editor.set_value(body, window, cx);
+        });
+
+        self.headers.update(cx, |table, _cx| {
+            table.delegate_mut().set_headers(headers);
         });
 
         cx.notify();
@@ -111,8 +125,16 @@ impl ResponseViewer {
         cx.notify();
     }
 
-    fn render_status_badge(&self, _cx: &mut Context<Self>) -> impl IntoElement {
-        Badge::new().child(self.response.status().to_string())
+    fn render_status_tag(&self, _cx: &mut Context<Self>) -> impl IntoElement {
+        let code = self.response.status();
+
+        if code.is_success() {
+            Tag::success().child(code.to_string())
+        } else if code.is_server_error() | code.is_client_error() {
+            Tag::danger().child(code.to_string())
+        } else {
+            Tag::primary().child(code.to_string())
+        }
     }
 
     fn render_tab(&self, _cx: &mut Context<Self>) -> AnyElement {
@@ -153,7 +175,7 @@ impl Render for ResponseViewer {
                         h_flex()
                             .p_2()
                             .gap_2()
-                            .child(self.render_status_badge(cx))
+                            .child(self.render_status_tag(cx))
                             .when_some(self.response.metrics(), |this, metrics| {
                                 let total_time = metrics.total_time();
 
