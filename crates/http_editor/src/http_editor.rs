@@ -1,33 +1,41 @@
-mod authorization;
-mod body;
-mod headers;
+mod authorization_tab;
+mod authorization_type_selector;
+mod body_tab;
+mod body_type_selector;
+mod dynamic_delegate;
+mod headers_table;
 mod method_selector;
 mod query_table;
-mod response_viewer;
+mod response_panel;
 
 use anyhow::Result;
 use gpui::{
-    AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement,
-    IntoElement, ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
+    App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, IntoElement,
+    ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, IndexPath, StyledExt,
+    ActiveTheme, Icon, IconName, StyledExt,
     button::{Button, ButtonVariants},
     divider::Divider,
     h_flex,
     input::{Input, InputState},
-    select::{Select, SelectState},
-    tab::{Tab, TabBar},
+    label::Label,
+    select::Select,
+    tab::{self, Tab, TabBar},
     table::{Table, TableState},
+    v_flex,
 };
 use http::Request;
 use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
 use crate::{
-    authorization::AuthorizationTab, body::Body, headers::HeadersTableDelegate,
-    method_selector::MethodDelegator, query_table::QueryTableDelegate,
-    response_viewer::ResponseViewer,
+    authorization_tab::AuthorizationTab,
+    body_tab::BodyTab,
+    headers_table::{HeadersTableEditor, headers_table_editor},
+    method_selector::{MethodSelector, method_selector},
+    query_table::QueryTableDelegate,
+    response_panel::ResponsePanel,
 };
 
 pub fn init(cx: &mut App) {
@@ -49,7 +57,7 @@ pub fn init(cx: &mut App) {
     });
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Debug, Default, Clone, PartialEq)]
 #[repr(usize)]
 pub enum HttpEditorTab {
     #[default]
@@ -102,15 +110,15 @@ impl From<HttpEditorTab> for Tab {
 }
 
 pub struct HttpEditor {
-    body: Entity<Body>,
+    body_tab: Entity<BodyTab>,
     url_input: Entity<InputState>,
-    method_selector: Entity<SelectState<MethodDelegator>>,
-    response_viewer: Option<Entity<ResponseViewer>>,
+    method_selector: Entity<MethodSelector>,
+    response_viewer: Option<Entity<ResponsePanel>>,
     executing_task: Option<Task<Result<()>>>,
     query_table: Entity<TableState<QueryTableDelegate>>,
-    headers_table: Entity<TableState<HeadersTableDelegate>>,
+    headers_table: Entity<HeadersTableEditor>,
     authorization_tab: Entity<AuthorizationTab>,
-    current_tab: HttpEditorTab,
+    selected_tab: HttpEditorTab,
     focus_handle: FocusHandle,
 }
 
@@ -118,33 +126,25 @@ impl HttpEditor {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let this = cx.entity().downgrade();
 
-        let method_selector = cx.new(|cx| {
-            SelectState::new(
-                MethodDelegator::new(),
-                Some(IndexPath::default()),
-                window,
-                cx,
-            )
-        });
+        let method_selector = cx.new(|cx| method_selector(window, cx));
 
-        let body = cx.new(|cx| Body::new(window, cx));
+        let body = cx.new(|cx| BodyTab::new(window, cx));
         let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
         let query_table = cx.new(|cx| TableState::new(QueryTableDelegate::new(), window, cx));
-        let headers_table =
-            cx.new(|cx| TableState::new(HeadersTableDelegate::new_editable(), window, cx));
+        let headers_table = cx.new(|cx| headers_table_editor(window, cx));
 
         Self {
             response_viewer: None,
             url_input: target_uri,
             method_selector,
-            body,
+            body_tab: body,
             query_table,
             headers_table,
             authorization_tab,
             focus_handle: cx.focus_handle(),
             executing_task: None,
-            current_tab: HttpEditorTab::default(),
+            selected_tab: HttpEditorTab::default(),
         }
     }
 
@@ -162,17 +162,8 @@ impl HttpEditor {
         self.executing_task.is_some()
     }
 
-    fn render_tab(&self, _cx: &mut Context<Self>) -> AnyElement {
-        match self.current_tab {
-            HttpEditorTab::Query => Table::new(&self.query_table).into_any_element(),
-            HttpEditorTab::Headers => Table::new(&self.headers_table).into_any_element(),
-            HttpEditorTab::Authorization => self.authorization_tab.clone().into_any_element(),
-            HttpEditorTab::Body => self.body.clone().into_any_element(),
-        }
-    }
-
     fn activate_tab(&mut self, index: usize, cx: &mut Context<Self>) {
-        self.current_tab = HttpEditorTab::try_from(index).unwrap_or_default();
+        self.selected_tab = HttpEditorTab::try_from(index).unwrap_or_default();
 
         cx.notify();
     }
@@ -185,16 +176,29 @@ impl HttpEditor {
         }
     }
 
-    fn build_request<T>(&self, cx: &mut Context<Self>, body: T) -> Result<Request<T>> {
+    fn build_request<T>(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+        body: T,
+    ) -> Result<Request<T>> {
+        let user_headers = self
+            .headers_table
+            .read_with(cx, |table, cx| table.delegate().get_headers(window, cx));
+
         let method = self.method_selector.read(cx).selected_value().unwrap();
         let uri = self
             .url_input
             .read_with(cx, |this, _cx| this.value())
             .to_string();
 
-        Request::builder()
-            .method(method)
-            .uri(uri)
+        let mut builder = Request::builder().method(method).uri(uri);
+
+        if let Some(headers) = builder.headers_mut() {
+            headers.extend(user_headers);
+        }
+
+        builder
             .automatic_decompression(true)
             .redirect_policy(http_client::config::RedirectPolicy::Follow)
             .metrics(true)
@@ -210,7 +214,7 @@ impl HttpEditor {
 
     fn send_request(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Result<()> {
         let client = HttpClient::global(cx);
-        let request = self.build_request(cx, ())?;
+        let request = self.build_request(window, cx, ())?;
 
         self.executing_task = Some(cx.spawn_in(window, async move |this, cx| {
             let (response, body) = cx
@@ -231,7 +235,7 @@ impl HttpEditor {
                     })
                 } else {
                     this.response_viewer =
-                        Some(cx.new(|cx| ResponseViewer::new(body, response, window, cx)));
+                        Some(cx.new(|cx| ResponsePanel::new(body, response, window, cx)));
                 }
 
                 this.executing_task = None;
@@ -245,7 +249,43 @@ impl HttpEditor {
         Ok(())
     }
 
-    fn render_request_section(&self, cx: &Context<Self>) -> impl IntoElement {
+    fn render_query_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
+        Table::new(&self.query_table)
+    }
+
+    fn render_headers_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
+        v_flex()
+            .size_full()
+            .child(
+                h_flex()
+                    .justify_between()
+                    .child(Label::new("Header List"))
+                    .child(
+                        Button::new("Add header")
+                            .icon(IconName::Plus)
+                            .on_click(cx.listener(move |this, _, window, cx| {
+                                this.headers_table.update(cx, |table, cx| {
+                                    table.delegate_mut().create_row(window, cx);
+                                })
+                            })),
+                    ),
+            )
+            .child(Table::new(&self.headers_table))
+    }
+
+    fn render_body_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
+        self.body_tab.clone()
+    }
+
+    fn render_authorization_tab(
+        &self,
+        window: &mut Window,
+        cx: &Context<Self>,
+    ) -> impl IntoElement {
+        self.authorization_tab.clone()
+    }
+
+    fn render_request_bar(&self, cx: &Context<Self>) -> impl IntoElement {
         h_flex()
             .border_1()
             .border_color(cx.theme().input)
@@ -297,7 +337,7 @@ impl Item for HttpEditor {
 impl Render for HttpEditor {
     fn render(
         &mut self,
-        _window: &mut gpui::Window,
+        window: &mut gpui::Window,
         cx: &mut Context<Self>,
     ) -> impl gpui::IntoElement {
         div()
@@ -306,19 +346,26 @@ impl Render for HttpEditor {
             .size_full()
             .p_4()
             .gap_4()
-            .child(self.render_request_section(cx))
+            .child(self.render_request_bar(cx))
             .child(
                 TabBar::new("Tabs")
                     .underline()
-                    .selected_index(self.current_tab.into())
+                    .selected_index(self.selected_tab.clone().into())
                     .on_click(cx.listener(|this, index, _, cx| {
                         this.activate_tab(*index, cx);
                     }))
                     .children(HttpEditorTab::all()),
             )
-            .child(self.render_tab(cx))
-            .when_some(self.response_viewer.as_ref(), |this, viewer| {
-                this.child(viewer.clone())
+            .map(|parent| match &self.selected_tab {
+                HttpEditorTab::Query => parent.child(self.render_query_tab(window, cx)),
+                HttpEditorTab::Headers => parent.child(self.render_headers_tab(window, cx)),
+                HttpEditorTab::Body => parent.child(self.render_body_tab(window, cx)),
+                HttpEditorTab::Authorization => {
+                    parent.child(self.render_authorization_tab(window, cx))
+                }
+            })
+            .when_some(self.response_viewer.as_ref(), |parent, viewer| {
+                parent.child(viewer.clone())
             })
             .track_focus(&self.focus_handle)
     }
