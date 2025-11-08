@@ -1,18 +1,80 @@
-use gpui::{AppContext, Context, Entity, ParentElement, Render, Styled, Window};
+use gpui::{AppContext, Context, Entity, ParentElement, Render, SharedString, Styled, Window};
 use gpui_component::{
-    input::{Input, InputState},
+    input::InputState,
+    select::{Select, SelectItem},
     v_flex,
 };
 
+use crate::body_type_selector::{BodyTypeSelector, body_type_selector};
+
+#[derive(Debug, Default, Clone, PartialEq)]
+pub enum BodyType {
+    #[default]
+    None,
+    FormData,
+    FormUrlEncoded,
+    Raw,
+}
+
+impl BodyType {
+    pub fn all() -> [Self; 4] {
+        [Self::None, Self::FormData, Self::FormUrlEncoded, Self::Raw]
+    }
+}
+
+impl From<BodyType> for SharedString {
+    fn from(kind: BodyType) -> Self {
+        match kind {
+            BodyType::None => "None".into(),
+            BodyType::FormData => "FormData".into(),
+            BodyType::FormUrlEncoded => "FormUrlEncoded".into(),
+            BodyType::Raw => "Raw".into(),
+        }
+    }
+}
+
+impl SelectItem for BodyType {
+    type Value = Self;
+
+    fn title(&self) -> gpui::SharedString {
+        self.clone().into()
+    }
+
+    fn value(&self) -> &Self::Value {
+        self
+    }
+}
+
+enum ActiveView {
+    None,
+    Raw { editor: Entity<InputState> },
+}
+
+impl ActiveView {}
+
 pub struct BodyTab {
-    state: Entity<InputState>,
+    selector: Entity<BodyTypeSelector>,
+    active_view: ActiveView,
 }
 
 impl BodyTab {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let state = cx.new(|cx| InputState::new(window, cx).code_editor("json"));
+        let selector = cx.new(|cx| body_type_selector(window, cx));
 
-        Self { state }
+        Self {
+            selector,
+            active_view: ActiveView::None,
+        }
+    }
+}
+
+impl BodyTab {
+    fn render_selector(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl gpui::IntoElement {
+        Select::new(&self.selector)
     }
 }
 
@@ -22,6 +84,6 @@ impl Render for BodyTab {
         window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
-        v_flex().h_full().child(Input::new(&self.state))
+        v_flex().h_full().child(self.render_selector(window, cx))
     }
 }

@@ -1,6 +1,7 @@
 mod authorization_tab;
 mod authorization_type_selector;
 mod body_tab;
+mod body_type_selector;
 mod headers;
 mod method_selector;
 mod query_table;

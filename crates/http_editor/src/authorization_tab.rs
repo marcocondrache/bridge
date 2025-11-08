@@ -13,7 +13,7 @@ use crate::{
     authorization_type_selector::{AuthorizationTypeSelector, authorization_type_selector},
 };
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum AuthorizationType {
     #[default]
     None,
@@ -33,11 +33,7 @@ impl From<AuthorizationType> for SharedString {
 
 impl AuthorizationType {
     pub fn all() -> [Self; 3] {
-        [
-            AuthorizationType::None,
-            AuthorizationType::Basic,
-            AuthorizationType::Bearer,
-        ]
+        [Self::None, Self::Basic, Self::Bearer]
     }
 }
 
