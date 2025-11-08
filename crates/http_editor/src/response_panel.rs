@@ -1,20 +1,22 @@
 use gpui::{
     App, AppContext, Context, Entity, FocusHandle, Focusable, IntoElement, ParentElement, Render,
-    Styled, Window, prelude::FluentBuilder,
+    Styled, Window, div, prelude::FluentBuilder,
 };
 use gpui_component::{
+    h_flex,
     input::{Input, InputState},
+    label::Label,
     tab::{Tab, TabBar},
     table::{Table, TableState},
     tag::Tag,
     v_flex,
 };
 use http::Response;
-use http_client::AsyncBody;
+use http_client::{AsyncBody, ResponseExt};
 
 use crate::headers::HeadersTableDelegate;
 
-#[derive(Clone, Copy, Default)]
+#[derive(Debug, Default, Clone, PartialEq)]
 #[repr(usize)]
 enum ResponseTab {
     #[default]
@@ -135,6 +137,22 @@ impl ResponsePanel {
         }
     }
 
+    fn render_status_bar(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        h_flex()
+            .gap_2()
+            .child(self.render_status_tag(cx))
+            .when_some(self.response.metrics(), |this, metrics| {
+                let total_time = metrics.total_time();
+
+                this.child(Label::new(
+                    humantime::format_duration(total_time).to_string(),
+                ))
+            })
+            .when_some(self.response.body().len(), |this, size| {
+                this.child(Label::new(format!("{} bytes", size)))
+            })
+    }
+
     fn render_body_tab(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         Input::new(&self.body)
             .h_full()
@@ -157,31 +175,16 @@ impl Render for ResponsePanel {
         v_flex()
             .h_full()
             .gap_2()
+            .child(self.render_status_bar(window, cx))
             .child(
                 TabBar::new("response_tabs")
                     .w_full()
                     .underline()
-                    .selected_index(self.selected_tab.into())
+                    .selected_index(self.selected_tab.clone().into())
                     .on_click(cx.listener(|this, index, _, cx| {
                         this.activate_tab(*index, cx);
                     }))
                     .children(ResponseTab::all()),
-                // .child(
-                //     h_flex()
-                //         .p_2()
-                //         .gap_2()
-                //         .child(self.render_status_tag(cx))
-                //         .when_some(self.response.metrics(), |this, metrics| {
-                //             let total_time = metrics.total_time();
-
-                //             this.child(Label::new(
-                //                 humantime::format_duration(total_time).to_string(),
-                //             ))
-                //         })
-                //         .when_some(self.response.body().len(), |this, size| {
-                //             this.child(Label::new(format!("{} bytes", size)))
-                //         }),
-                // ),
             )
             .map(|parent| match self.selected_tab {
                 ResponseTab::Body => parent.child(self.render_body_tab(window, cx)),

@@ -54,7 +54,7 @@ pub fn init(cx: &mut App) {
     });
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Debug, Default, Clone, PartialEq)]
 #[repr(usize)]
 pub enum HttpEditorTab {
     #[default]
@@ -254,7 +254,7 @@ impl HttpEditor {
         self.authorization_tab.clone()
     }
 
-    fn render_request_section(&self, cx: &Context<Self>) -> impl IntoElement {
+    fn render_request_bar(&self, cx: &Context<Self>) -> impl IntoElement {
         h_flex()
             .border_1()
             .border_color(cx.theme().input)
@@ -315,11 +315,11 @@ impl Render for HttpEditor {
             .size_full()
             .p_4()
             .gap_4()
-            .child(self.render_request_section(cx))
+            .child(self.render_request_bar(cx))
             .child(
                 TabBar::new("Tabs")
                     .underline()
-                    .selected_index(self.selected_tab.into())
+                    .selected_index(self.selected_tab.clone().into())
                     .on_click(cx.listener(|this, index, _, cx| {
                         this.activate_tab(*index, cx);
                     }))
