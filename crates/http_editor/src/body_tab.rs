@@ -1,6 +1,9 @@
-use gpui::{AppContext, Context, Entity, ParentElement, Render, SharedString, Styled, Window};
+use gpui::{
+    AppContext, Context, Entity, ParentElement, Render, SharedString, Styled, Window,
+    prelude::FluentBuilder,
+};
 use gpui_component::{
-    input::InputState,
+    input::{Input, InputState},
     select::{Select, SelectItem},
     v_flex,
 };
@@ -50,7 +53,13 @@ enum ActiveView {
     Raw { editor: Entity<InputState> },
 }
 
-impl ActiveView {}
+impl ActiveView {
+    pub fn raw(window: &mut Window, cx: &mut Context<BodyTab>) -> Self {
+        let editor = cx.new(|cx| InputState::new(window, cx).code_editor(""));
+
+        Self::Raw { editor }
+    }
+}
 
 pub struct BodyTab {
     selector: Entity<BodyTypeSelector>,
@@ -84,6 +93,13 @@ impl Render for BodyTab {
         window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
-        v_flex().h_full().child(self.render_selector(window, cx))
+        v_flex()
+            .h_full()
+            .gap_4()
+            .child(self.render_selector(window, cx))
+            .map(|parent| match &self.active_view {
+                ActiveView::None => parent,
+                ActiveView::Raw { editor } => parent.child(Input::new(&editor)),
+            })
     }
 }
