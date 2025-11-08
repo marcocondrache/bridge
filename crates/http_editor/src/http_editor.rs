@@ -13,14 +13,16 @@ use gpui::{
     ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, StyledExt,
+    ActiveTheme, Icon, IconName, StyledExt,
     button::{Button, ButtonVariants},
     divider::Divider,
     h_flex,
     input::{Input, InputState},
+    label::Label,
     select::Select,
     tab::{Tab, TabBar},
     table::{Table, TableState},
+    v_flex,
 };
 use http::Request;
 use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
@@ -29,7 +31,7 @@ use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 use crate::{
     authorization_tab::AuthorizationTab,
     body_tab::BodyTab,
-    headers::HeadersTableDelegate,
+    headers::{HeadersTableDelegate, headers_table},
     method_selector::{MethodSelector, method_selector},
     query_table::QueryTableDelegate,
     response_panel::ResponsePanel,
@@ -129,8 +131,7 @@ impl HttpEditor {
         let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
         let query_table = cx.new(|cx| TableState::new(QueryTableDelegate::new(), window, cx));
-        let headers_table =
-            cx.new(|cx| TableState::new(HeadersTableDelegate::new_editable(), window, cx));
+        let headers_table = cx.new(|cx| headers_table(window, cx));
 
         Self {
             response_viewer: None,
@@ -239,7 +240,23 @@ impl HttpEditor {
     }
 
     fn render_headers_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
-        Table::new(&self.headers_table)
+        v_flex()
+            .size_full()
+            .child(
+                h_flex()
+                    .justify_between()
+                    .child(Label::new("Header List"))
+                    .child(
+                        Button::new("Add header")
+                            .icon(IconName::Plus)
+                            .on_click(cx.listener(move |this, _, window, cx| {
+                                this.headers_table.update(cx, |table, cx| {
+                                    table.delegate_mut().create_row(window, cx);
+                                })
+                            })),
+                    ),
+            )
+            .child(Table::new(&self.headers_table))
     }
 
     fn render_body_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {

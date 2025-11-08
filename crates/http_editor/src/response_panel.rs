@@ -78,10 +78,8 @@ impl ResponsePanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let headers = response.headers().clone();
-
         let focus_handle = cx.focus_handle();
-        let headers = cx.new(|cx| TableState::new(HeadersTableDelegate::new(headers), window, cx));
+        let headers = cx.new(|cx| TableState::new(HeadersTableDelegate::new(), window, cx));
         let body = cx.new(|cx| {
             InputState::new(window, cx)
                 .code_editor("html")
@@ -112,9 +110,9 @@ impl ResponsePanel {
             editor.set_value(body, window, cx);
         });
 
-        self.headers_table.update(cx, |table, _cx| {
-            table.delegate_mut().set_headers(headers);
-        });
+        // self.headers_table.update(cx, |table, _cx| {
+        //     table.delegate_mut().set_headers(headers);
+        // });
 
         cx.notify();
     }

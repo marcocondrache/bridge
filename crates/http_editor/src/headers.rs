@@ -1,50 +1,64 @@
-use gpui::{App, ParentElement, div, prelude::FluentBuilder};
+use gpui::{App, AppContext, Context, Entity, ParentElement, Window, div, prelude::FluentBuilder};
 use gpui_component::{
-    label::Label,
-    table::{Column, TableDelegate},
+    input::{Input, InputState},
+    table::{Column, ColumnFixed, TableDelegate, TableState},
 };
-use http::{HeaderMap, HeaderName, HeaderValue};
-use indexmap::IndexMap;
+use indexmap::IndexSet;
+
+pub type HeadersTable = TableState<HeadersTableDelegate>;
+
+pub fn headers_table(window: &mut Window, cx: &mut Context<HeadersTable>) -> HeadersTable {
+    TableState::new(HeadersTableDelegate::new(), window, cx).row_selectable(false)
+}
+
+#[derive(Hash, Eq, PartialEq, Clone, Debug)]
+struct Row {
+    name: Entity<InputState>,
+    value: Entity<InputState>,
+}
+
+impl Row {
+    pub fn new(window: &mut Window, cx: &mut App) -> Self {
+        let name = cx.new(|cx| InputState::new(window, cx).placeholder("Key"));
+        let value = cx.new(|cx| InputState::new(window, cx).placeholder("Value"));
+
+        Self { name, value }
+    }
+
+    pub fn render_name(&self, cx: &mut App) -> impl gpui::IntoElement {
+        Input::new(&self.name).appearance(false)
+    }
+
+    pub fn render_value(&self, cx: &mut App) -> impl gpui::IntoElement {
+        Input::new(&self.value).appearance(false)
+    }
+}
 
 pub struct HeadersTableDelegate {
-    headers: IndexMap<Option<HeaderName>, HeaderValue>,
-    columns: [Column; 2],
+    headers: IndexSet<Row>,
+    columns: [Column; 4],
 }
 
 impl HeadersTableDelegate {
     const NAME_COLUMN: &str = "name";
     const VALUE_COLUMN: &str = "value";
+    const TOGGLE_COLUMN: &str = "toggle";
+    const DELETE_COLUMN: &str = "delete";
 
-    pub fn new(header_map: HeaderMap) -> Self {
+    pub fn new() -> Self {
         Self {
-            headers: IndexMap::from_iter(header_map),
-            columns: Self::static_columns(),
+            headers: IndexSet::new(),
+            columns: [
+                Column::new(Self::NAME_COLUMN, "").fixed_left(),
+                Column::new(Self::VALUE_COLUMN, ""),
+                Column::new(Self::TOGGLE_COLUMN, ""),
+                Column::new(Self::DELETE_COLUMN, ""),
+            ],
         }
     }
 
-    pub fn new_editable() -> Self {
-        Self {
-            headers: IndexMap::new(),
-            columns: Self::editable_columns(),
-        }
-    }
-
-    pub fn set_headers(&mut self, headers: HeaderMap) {
-        self.headers = IndexMap::from_iter(headers);
-    }
-
-    fn static_columns() -> [Column; 2] {
-        [
-            Column::new(Self::NAME_COLUMN, "Name"),
-            Column::new(Self::VALUE_COLUMN, "Value"),
-        ]
-    }
-
-    fn editable_columns() -> [Column; 2] {
-        [
-            Column::new(Self::NAME_COLUMN, "Name"),
-            Column::new(Self::VALUE_COLUMN, "Value"),
-        ]
+    pub fn create_row(&mut self, window: &mut Window, cx: &mut App) {
+        self.headers.insert(Row::new(window, cx));
     }
 }
 
@@ -71,16 +85,12 @@ impl TableDelegate for HeadersTableDelegate {
         let column = &self.columns[col_ix];
         let row = self.headers.get_index(row_ix);
 
-        if let Some((name, value)) = row {
-            match column.key.as_ref() {
-                Self::NAME_COLUMN => div().when_some(name.clone(), |this, name| {
-                    this.child(Label::new(name.to_string()))
-                }),
-                Self::VALUE_COLUMN => div().when_some(value.to_str().ok(), |this, value| {
-                    this.child(Label::new(value.to_string()))
-                }),
-                _ => div(),
-            }
+        if let Some(row) = row {
+            div().map(|parent| match column.key.as_ref() {
+                Self::NAME_COLUMN => parent.child(row.render_name(cx)),
+                Self::VALUE_COLUMN => parent.child(row.render_value(cx)),
+                _ => parent,
+            })
         } else {
             div()
         }
