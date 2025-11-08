@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use assets::Assets;
 use bridge::app_menus;
 use gpui::{Application, KeyBinding};
 use workspace::{AppState, NewHttpEditor};
@@ -9,7 +10,7 @@ use crate::bridge::{build_window_options, initialize_workspace};
 mod bridge;
 
 fn main() {
-    let app = Application::new();
+    let app = Application::new().with_assets(Assets);
 
     app.run(|cx| {
         gpui_component::init(cx);

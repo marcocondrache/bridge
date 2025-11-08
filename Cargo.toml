@@ -22,6 +22,7 @@ settings = { path = "crates/settings" }
 http_editor = { path = "crates/http_editor" }
 http_client = { path = "crates/http_client" }
 title_bar = { path = "crates/title_bar" }
+assets = { path = "crates/assets" }
 
 #
 # External crates
