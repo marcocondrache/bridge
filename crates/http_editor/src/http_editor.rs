@@ -1,5 +1,6 @@
 mod authorization;
-mod headers_table;
+mod body;
+mod headers;
 mod method_selector;
 mod query_table;
 mod response_viewer;
@@ -15,7 +16,6 @@ use gpui_component::{
     divider::Divider,
     h_flex,
     input::{Input, InputState},
-    resizable::v_resizable,
     select::{Select, SelectState},
     tab::{Tab, TabBar},
     table::{Table, TableState},
@@ -24,7 +24,7 @@ use http_client::{AsyncReadResponseExt, HttpClient, Request, config::Configurabl
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
 use crate::{
-    authorization::AuthorizationTab, headers_table::HeadersTableDelegate,
+    authorization::AuthorizationTab, body::Body, headers::HeadersTableDelegate,
     method_selector::MethodDelegator, query_table::QueryTableDelegate,
     response_viewer::ResponseViewer,
 };
@@ -101,6 +101,7 @@ impl From<HttpEditorTab> for Tab {
 }
 
 pub struct HttpEditor {
+    body: Entity<Body>,
     url_input: Entity<InputState>,
     method_selector: Entity<SelectState<MethodDelegator>>,
     response_viewer: Option<Entity<ResponseViewer>>,
@@ -125,6 +126,7 @@ impl HttpEditor {
             )
         });
 
+        let body = cx.new(|cx| Body::new(window, cx));
         let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
         let query_table = cx.new(|cx| TableState::new(QueryTableDelegate::new(), window, cx));
@@ -135,6 +137,7 @@ impl HttpEditor {
             response_viewer: None,
             url_input: target_uri,
             method_selector,
+            body,
             query_table,
             headers_table,
             authorization_tab,
@@ -163,6 +166,7 @@ impl HttpEditor {
             HttpEditorTab::Query => Table::new(&self.query_table).into_any_element(),
             HttpEditorTab::Headers => Table::new(&self.headers_table).into_any_element(),
             HttpEditorTab::Authorization => self.authorization_tab.clone().into_any_element(),
+            HttpEditorTab::Body => self.body.clone().into_any_element(),
             _ => div().into_any_element(),
         }
     }

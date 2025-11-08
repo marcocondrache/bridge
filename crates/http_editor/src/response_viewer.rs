@@ -13,7 +13,7 @@ use gpui_component::{
 };
 use http_client::{AsyncBody, Response, ResponseExt};
 
-use crate::headers_table::HeadersTableDelegate;
+use crate::headers::HeadersTableDelegate;
 
 #[derive(Clone, Copy, Default)]
 #[repr(usize)]

@@ -1,6 +1,7 @@
+mod basic;
+
 use gpui::{
     AppContext, Context, Entity, ParentElement, Render, SharedString, Styled, WeakEntity, Window,
-    div,
 };
 use gpui_component::{
     ActiveTheme, IndexPath, h_flex,
