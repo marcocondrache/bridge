@@ -11,7 +11,8 @@ use gpui_component::{
     tag::Tag,
     v_flex,
 };
-use http_client::{AsyncBody, Response, ResponseExt};
+use http::Response;
+use http_client::{AsyncBody, ResponseExt};
 
 use crate::headers::HeadersTableDelegate;
 

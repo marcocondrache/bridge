@@ -3,7 +3,7 @@ use gpui_component::{
     label::Label,
     table::{Column, TableDelegate},
 };
-use http_client::{HeaderMap, HeaderName, HeaderValue};
+use http::{HeaderMap, HeaderName, HeaderValue};
 use indexmap::IndexMap;
 
 pub struct HeadersTableDelegate {

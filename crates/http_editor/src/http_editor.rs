@@ -20,7 +20,8 @@ use gpui_component::{
     tab::{Tab, TabBar},
     table::{Table, TableState},
 };
-use http_client::{AsyncReadResponseExt, HttpClient, Request, config::Configurable};
+use http::Request;
+use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
 use crate::{

@@ -23,8 +23,6 @@ pub mod auth;
 pub mod config;
 pub mod error;
 
-pub use http::*;
-
 pub mod interceptor;
 
 use gpui::{App, Global};
@@ -58,9 +56,9 @@ pub mod prelude {
 }
 
 pub fn init(cx: &mut App) {
-    let client = HttpClientBuilder::default().build().unwrap();
-
-    cx.set_global(GlobalHttpClient(client));
+    cx.set_global(GlobalHttpClient(
+        HttpClientBuilder::default().build().unwrap(),
+    ));
 }
 
 pub struct GlobalHttpClient(HttpClient);
