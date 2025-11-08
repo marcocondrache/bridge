@@ -1,20 +1,20 @@
 use gpui::{
     App, AppContext, Context, Entity, FocusHandle, Focusable, IntoElement, ParentElement, Render,
-    Styled, Window, div, prelude::FluentBuilder,
+    Styled, Window, prelude::FluentBuilder,
 };
 use gpui_component::{
     h_flex,
     input::{Input, InputState},
     label::Label,
     tab::{Tab, TabBar},
-    table::{Table, TableState},
+    table::Table,
     tag::Tag,
     v_flex,
 };
 use http::Response;
 use http_client::{AsyncBody, ResponseExt};
 
-use crate::headers::HeadersTableDelegate;
+use crate::headers_table::{HeadersTable, headers_table};
 
 #[derive(Debug, Default, Clone, PartialEq)]
 #[repr(usize)]
@@ -58,7 +58,7 @@ impl From<ResponseTab> for Tab {
 }
 
 pub struct ResponsePanel {
-    headers_table: Entity<TableState<HeadersTableDelegate>>,
+    headers_table: Entity<HeadersTable>,
     body: Entity<InputState>,
     selected_tab: ResponseTab,
     focus_handle: FocusHandle,
@@ -78,8 +78,16 @@ impl ResponsePanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
+        let headers = response.headers().clone();
+
         let focus_handle = cx.focus_handle();
-        let headers = cx.new(|cx| TableState::new(HeadersTableDelegate::new(), window, cx));
+        let headers_table = cx.new(|cx| {
+            let mut table = headers_table(window, cx);
+
+            table.delegate_mut().set_headers(headers);
+            table
+        });
+
         let body = cx.new(|cx| {
             InputState::new(window, cx)
                 .code_editor("html")
@@ -89,10 +97,10 @@ impl ResponsePanel {
 
         Self {
             body,
-            headers_table: headers,
-            selected_tab: ResponseTab::default(),
+            headers_table,
             focus_handle,
             response,
+            selected_tab: ResponseTab::default(),
         }
     }
 
@@ -110,9 +118,9 @@ impl ResponsePanel {
             editor.set_value(body, window, cx);
         });
 
-        // self.headers_table.update(cx, |table, _cx| {
-        //     table.delegate_mut().set_headers(headers);
-        // });
+        self.headers_table.update(cx, |table, _cx| {
+            table.delegate_mut().set_headers(headers);
+        });
 
         cx.notify();
     }

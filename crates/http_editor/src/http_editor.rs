@@ -2,7 +2,8 @@ mod authorization_tab;
 mod authorization_type_selector;
 mod body_tab;
 mod body_type_selector;
-mod headers;
+mod dynamic_delegate;
+mod headers_table;
 mod method_selector;
 mod query_table;
 mod response_panel;
@@ -20,7 +21,7 @@ use gpui_component::{
     input::{Input, InputState},
     label::Label,
     select::Select,
-    tab::{Tab, TabBar},
+    tab::{self, Tab, TabBar},
     table::{Table, TableState},
     v_flex,
 };
@@ -31,7 +32,7 @@ use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 use crate::{
     authorization_tab::AuthorizationTab,
     body_tab::BodyTab,
-    headers::{HeadersTableDelegate, headers_table},
+    headers_table::{HeadersTableEditor, headers_table_editor},
     method_selector::{MethodSelector, method_selector},
     query_table::QueryTableDelegate,
     response_panel::ResponsePanel,
@@ -115,7 +116,7 @@ pub struct HttpEditor {
     response_viewer: Option<Entity<ResponsePanel>>,
     executing_task: Option<Task<Result<()>>>,
     query_table: Entity<TableState<QueryTableDelegate>>,
-    headers_table: Entity<TableState<HeadersTableDelegate>>,
+    headers_table: Entity<HeadersTableEditor>,
     authorization_tab: Entity<AuthorizationTab>,
     selected_tab: HttpEditorTab,
     focus_handle: FocusHandle,
@@ -131,7 +132,7 @@ impl HttpEditor {
         let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
         let query_table = cx.new(|cx| TableState::new(QueryTableDelegate::new(), window, cx));
-        let headers_table = cx.new(|cx| headers_table(window, cx));
+        let headers_table = cx.new(|cx| headers_table_editor(window, cx));
 
         Self {
             response_viewer: None,
@@ -175,16 +176,29 @@ impl HttpEditor {
         }
     }
 
-    fn build_request<T>(&self, cx: &mut Context<Self>, body: T) -> Result<Request<T>> {
+    fn build_request<T>(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+        body: T,
+    ) -> Result<Request<T>> {
+        let user_headers = self
+            .headers_table
+            .read_with(cx, |table, cx| table.delegate().get_headers(window, cx));
+
         let method = self.method_selector.read(cx).selected_value().unwrap();
         let uri = self
             .url_input
             .read_with(cx, |this, _cx| this.value())
             .to_string();
 
-        Request::builder()
-            .method(method)
-            .uri(uri)
+        let mut builder = Request::builder().method(method).uri(uri);
+
+        if let Some(headers) = builder.headers_mut() {
+            headers.extend(user_headers);
+        }
+
+        builder
             .automatic_decompression(true)
             .redirect_policy(http_client::config::RedirectPolicy::Follow)
             .metrics(true)
@@ -200,7 +214,7 @@ impl HttpEditor {
 
     fn send_request(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Result<()> {
         let client = HttpClient::global(cx);
-        let request = self.build_request(cx, ())?;
+        let request = self.build_request(window, cx, ())?;
 
         self.executing_task = Some(cx.spawn_in(window, async move |this, cx| {
             let (response, body) = cx
