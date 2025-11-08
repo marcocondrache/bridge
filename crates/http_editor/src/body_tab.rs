@@ -4,11 +4,11 @@ use gpui_component::{
     v_flex,
 };
 
-pub struct Body {
+pub struct BodyTab {
     state: Entity<InputState>,
 }
 
-impl Body {
+impl BodyTab {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let state = cx.new(|cx| InputState::new(window, cx).code_editor("json"));
 
@@ -16,7 +16,7 @@ impl Body {
     }
 }
 
-impl Render for Body {
+impl Render for BodyTab {
     fn render(
         &mut self,
         window: &mut gpui::Window,

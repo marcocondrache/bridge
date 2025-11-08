@@ -1,6 +1,6 @@
 mod authorization_tab;
 mod authorization_type_selector;
-mod body;
+mod body_tab;
 mod headers;
 mod method_selector;
 mod query_table;
@@ -27,7 +27,7 @@ use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
 use crate::{
     authorization_tab::AuthorizationTab,
-    body::Body,
+    body_tab::BodyTab,
     headers::HeadersTableDelegate,
     method_selector::{MethodSelector, method_selector},
     query_table::QueryTableDelegate,
@@ -106,7 +106,7 @@ impl From<HttpEditorTab> for Tab {
 }
 
 pub struct HttpEditor {
-    body: Entity<Body>,
+    body_tab: Entity<BodyTab>,
     url_input: Entity<InputState>,
     method_selector: Entity<MethodSelector>,
     response_viewer: Option<Entity<ResponsePanel>>,
@@ -124,7 +124,7 @@ impl HttpEditor {
 
         let method_selector = cx.new(|cx| method_selector(window, cx));
 
-        let body = cx.new(|cx| Body::new(window, cx));
+        let body = cx.new(|cx| BodyTab::new(window, cx));
         let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
         let query_table = cx.new(|cx| TableState::new(QueryTableDelegate::new(), window, cx));
@@ -135,7 +135,7 @@ impl HttpEditor {
             response_viewer: None,
             url_input: target_uri,
             method_selector,
-            body,
+            body_tab: body,
             query_table,
             headers_table,
             authorization_tab,
@@ -157,15 +157,6 @@ impl HttpEditor {
 
     pub fn is_executing(&self) -> bool {
         self.executing_task.is_some()
-    }
-
-    fn render_tab(&self, _cx: &mut Context<Self>) -> AnyElement {
-        match self.current_tab {
-            HttpEditorTab::Query => Table::new(&self.query_table).into_any_element(),
-            HttpEditorTab::Headers => Table::new(&self.headers_table).into_any_element(),
-            HttpEditorTab::Authorization => self.authorization_tab.clone().into_any_element(),
-            HttpEditorTab::Body => self.body.clone().into_any_element(),
-        }
     }
 
     fn activate_tab(&mut self, index: usize, cx: &mut Context<Self>) {
@@ -242,6 +233,26 @@ impl HttpEditor {
         Ok(())
     }
 
+    fn render_query_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
+        Table::new(&self.query_table)
+    }
+
+    fn render_headers_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
+        Table::new(&self.headers_table)
+    }
+
+    fn render_body_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
+        self.body_tab.clone()
+    }
+
+    fn render_authorization_tab(
+        &self,
+        window: &mut Window,
+        cx: &Context<Self>,
+    ) -> impl IntoElement {
+        self.authorization_tab.clone()
+    }
+
     fn render_request_section(&self, cx: &Context<Self>) -> impl IntoElement {
         h_flex()
             .border_1()
@@ -294,7 +305,7 @@ impl Item for HttpEditor {
 impl Render for HttpEditor {
     fn render(
         &mut self,
-        _window: &mut gpui::Window,
+        window: &mut gpui::Window,
         cx: &mut Context<Self>,
     ) -> impl gpui::IntoElement {
         div()
@@ -313,9 +324,16 @@ impl Render for HttpEditor {
                     }))
                     .children(HttpEditorTab::all()),
             )
-            .child(self.render_tab(cx))
-            .when_some(self.response_viewer.as_ref(), |this, viewer| {
-                this.child(viewer.clone())
+            .map(|parent| match &self.current_tab {
+                HttpEditorTab::Query => parent.child(self.render_query_tab(window, cx)),
+                HttpEditorTab::Headers => parent.child(self.render_headers_tab(window, cx)),
+                HttpEditorTab::Body => parent.child(self.render_body_tab(window, cx)),
+                HttpEditorTab::Authorization => {
+                    parent.child(self.render_authorization_tab(window, cx))
+                }
+            })
+            .when_some(self.response_viewer.as_ref(), |parent, viewer| {
+                parent.child(viewer.clone())
             })
             .track_focus(&self.focus_handle)
     }

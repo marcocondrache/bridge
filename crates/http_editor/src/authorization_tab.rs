@@ -1,5 +1,5 @@
 use gpui::{
-    AppContext, Context, Div, Entity, ParentElement, Render, SharedString, Subscription,
+    AppContext, Context, Entity, ParentElement, Render, SharedString, Styled, Subscription,
     WeakEntity, Window, div, prelude::FluentBuilder,
 };
 use gpui_component::{
@@ -83,7 +83,7 @@ pub struct AuthorizationTab {
     editor: WeakEntity<HttpEditor>,
     selector: Entity<AuthorizationTypeSelector>,
     active_view: ActiveView,
-    _subscriptions: Vec<Subscription>,
+    _selector_subscription: Subscription,
 }
 
 impl AuthorizationTab {
@@ -93,26 +93,24 @@ impl AuthorizationTab {
         cx: &mut Context<Self>,
     ) -> Self {
         let selector = cx.new(|cx| authorization_type_selector(window, cx));
-        let subscriptions =
-            vec![
-                cx.subscribe_in(&selector, window, |this, _state, event, window, cx| {
-                    if let SelectEvent::Confirm(Some(value)) = event {
-                        let view = match value {
-                            AuthorizationType::None => ActiveView::None,
-                            AuthorizationType::Basic => ActiveView::basic(window, cx),
-                            AuthorizationType::Bearer => ActiveView::bearer(window, cx),
-                        };
+        let _selector_subscription =
+            cx.subscribe_in(&selector, window, |this, _state, event, window, cx| {
+                if let SelectEvent::Confirm(Some(value)) = event {
+                    let view = match value {
+                        AuthorizationType::None => ActiveView::None,
+                        AuthorizationType::Basic => ActiveView::basic(window, cx),
+                        AuthorizationType::Bearer => ActiveView::bearer(window, cx),
+                    };
 
-                        this.set_active_view(view, window, cx);
-                    }
-                }),
-            ];
+                    this.set_active_view(view, window, cx);
+                }
+            });
 
         Self {
             selector,
             editor,
             active_view: ActiveView::None,
-            _subscriptions: subscriptions,
+            _selector_subscription,
         }
     }
 
@@ -137,6 +135,7 @@ impl AuthorizationTab {
 impl Render for AuthorizationTab {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
         v_flex()
+            .gap_4()
             .child(self.render_selector(window, cx))
             .map(|parent| match &self.active_view {
                 ActiveView::None => parent.child("No authorization selected"),
