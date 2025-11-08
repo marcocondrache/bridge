@@ -14,3 +14,4 @@ settings.workspace = true
 http_client.workspace = true
 http_editor.workspace = true
 title_bar.workspace = true
+assets.workspace = true
