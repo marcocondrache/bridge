@@ -1,14 +1,13 @@
 use gpui::{
     AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, IntoElement,
-    ParentElement, Render, SharedString, Styled, Window, prelude::FluentBuilder,
+    ParentElement, Render, Styled, Window, prelude::FluentBuilder,
 };
 use gpui_component::{
-    badge::Badge,
     h_flex,
-    input::{InputState, TextInput},
+    input::{Input, InputState},
     label::Label,
     tab::{Tab, TabBar},
-    table::Table,
+    table::{Table, TableState},
     tag::Tag,
     v_flex,
 };
@@ -58,7 +57,7 @@ impl From<ResponseTab> for Tab {
 }
 
 pub struct ResponseViewer {
-    headers: Entity<Table<HeadersTableDelegate>>,
+    headers_table: Entity<TableState<HeadersTableDelegate>>,
     body: Entity<InputState>,
     active_tab: ResponseTab,
     focus_handle: FocusHandle,
@@ -81,7 +80,7 @@ impl ResponseViewer {
         let headers = response.headers().clone();
 
         let focus_handle = cx.focus_handle();
-        let headers = cx.new(|cx| Table::new(HeadersTableDelegate::new(headers), window, cx));
+        let headers = cx.new(|cx| TableState::new(HeadersTableDelegate::new(headers), window, cx));
         let body = cx.new(|cx| {
             InputState::new(window, cx)
                 .code_editor("html")
@@ -91,7 +90,7 @@ impl ResponseViewer {
 
         Self {
             body,
-            headers,
+            headers_table: headers,
             active_tab: ResponseTab::default(),
             focus_handle,
             response,
@@ -112,7 +111,7 @@ impl ResponseViewer {
             editor.set_value(body, window, cx);
         });
 
-        self.headers.update(cx, |table, _cx| {
+        self.headers_table.update(cx, |table, _cx| {
             table.delegate_mut().set_headers(headers);
         });
 
@@ -139,12 +138,12 @@ impl ResponseViewer {
 
     fn render_tab(&self, _cx: &mut Context<Self>) -> AnyElement {
         match self.active_tab {
-            ResponseTab::Body => TextInput::new(&self.body)
+            ResponseTab::Body => Input::new(&self.body)
                 .h_full()
                 .disabled(true)
                 .focus_bordered(false)
                 .into_any_element(),
-            ResponseTab::Headers => self.headers.clone().into_any_element(),
+            ResponseTab::Headers => Table::new(&self.headers_table).into_any_element(),
         }
     }
 }
@@ -159,34 +158,30 @@ impl Render for ResponseViewer {
             .h_full()
             .gap_2()
             .child(
-                h_flex()
+                TabBar::new("response_tabs")
                     .w_full()
-                    .justify_between()
-                    .child(
-                        TabBar::new("response_tabs")
-                            .segmented()
-                            .selected_index(self.active_tab.into())
-                            .on_click(cx.listener(|this, index, _, cx| {
-                                this.activate_tab(*index, cx);
-                            }))
-                            .children(ResponseTab::all()),
-                    )
-                    .child(
-                        h_flex()
-                            .p_2()
-                            .gap_2()
-                            .child(self.render_status_tag(cx))
-                            .when_some(self.response.metrics(), |this, metrics| {
-                                let total_time = metrics.total_time();
+                    .underline()
+                    .selected_index(self.active_tab.into())
+                    .on_click(cx.listener(|this, index, _, cx| {
+                        this.activate_tab(*index, cx);
+                    }))
+                    .children(ResponseTab::all()),
+                // .child(
+                //     h_flex()
+                //         .p_2()
+                //         .gap_2()
+                //         .child(self.render_status_tag(cx))
+                //         .when_some(self.response.metrics(), |this, metrics| {
+                //             let total_time = metrics.total_time();
 
-                                this.child(Label::new(
-                                    humantime::format_duration(total_time).to_string(),
-                                ))
-                            })
-                            .when_some(self.response.body().len(), |this, size| {
-                                this.child(Label::new(format!("{} bytes", size)))
-                            }),
-                    ),
+                //             this.child(Label::new(
+                //                 humantime::format_duration(total_time).to_string(),
+                //             ))
+                //         })
+                //         .when_some(self.response.body().len(), |this, size| {
+                //             this.child(Label::new(format!("{} bytes", size)))
+                //         }),
+                // ),
             )
             .child(self.render_tab(cx))
     }

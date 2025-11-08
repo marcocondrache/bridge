@@ -20,3 +20,4 @@ url.workspace = true
 regex.workspace = true
 indexmap.workspace = true
 smallvec.workspace = true
+http.workspace = true

@@ -1,3 +1,4 @@
+mod authorization;
 mod headers_table;
 mod method_selector;
 mod query_table;
@@ -6,21 +7,26 @@ mod response_viewer;
 use anyhow::Result;
 use gpui::{
     AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement,
-    IntoElement, ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder,
+    IntoElement, ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    StyledExt,
+    ActiveTheme, IndexPath, StyledExt,
     button::{Button, ButtonVariants},
-    input::{InputState, TextInput},
+    divider::Divider,
+    h_flex,
+    input::{Input, InputState},
+    resizable::v_resizable,
+    select::{Select, SelectState},
     tab::{Tab, TabBar},
-    table::Table,
+    table::{Table, TableState},
 };
 use http_client::{AsyncReadResponseExt, HttpClient, Request, config::Configurable};
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
 use crate::{
-    headers_table::HeadersTableDelegate, method_selector::MethodSelector,
-    query_table::QueryTableDelegate, response_viewer::ResponseViewer,
+    authorization::AuthorizationTab, headers_table::HeadersTableDelegate,
+    method_selector::MethodDelegator, query_table::QueryTableDelegate,
+    response_viewer::ResponseViewer,
 };
 
 pub fn init(cx: &mut App) {
@@ -96,22 +102,34 @@ impl From<HttpEditorTab> for Tab {
 
 pub struct HttpEditor {
     url_input: Entity<InputState>,
-    method_selector: Entity<MethodSelector>,
+    method_selector: Entity<SelectState<MethodDelegator>>,
     response_viewer: Option<Entity<ResponseViewer>>,
     executing_task: Option<Task<Result<()>>>,
-    query_table: Entity<Table<QueryTableDelegate>>,
-    headers_table: Entity<Table<HeadersTableDelegate>>,
+    query_table: Entity<TableState<QueryTableDelegate>>,
+    headers_table: Entity<TableState<HeadersTableDelegate>>,
+    authorization_tab: Entity<AuthorizationTab>,
     current_tab: HttpEditorTab,
     focus_handle: FocusHandle,
 }
 
 impl HttpEditor {
-    pub fn new(window: &mut Window, cx: &mut App) -> Self {
-        let method_selector = MethodSelector::new(cx);
-        let target_uri = cx.new(|cx| InputState::new(window, cx));
-        let query_table = cx.new(|cx| Table::new(QueryTableDelegate::new(), window, cx));
+    pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+        let this = cx.entity().downgrade();
+
+        let method_selector = cx.new(|cx| {
+            SelectState::new(
+                MethodDelegator::new(),
+                Some(IndexPath::default()),
+                window,
+                cx,
+            )
+        });
+
+        let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
+        let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
+        let query_table = cx.new(|cx| TableState::new(QueryTableDelegate::new(), window, cx));
         let headers_table =
-            cx.new(|cx| Table::new(HeadersTableDelegate::new_editable(), window, cx));
+            cx.new(|cx| TableState::new(HeadersTableDelegate::new_editable(), window, cx));
 
         Self {
             response_viewer: None,
@@ -119,6 +137,7 @@ impl HttpEditor {
             method_selector,
             query_table,
             headers_table,
+            authorization_tab,
             focus_handle: cx.focus_handle(),
             executing_task: None,
             current_tab: HttpEditorTab::default(),
@@ -141,8 +160,9 @@ impl HttpEditor {
 
     fn render_tab(&self, _cx: &mut Context<Self>) -> AnyElement {
         match self.current_tab {
-            HttpEditorTab::Query => self.query_table.clone().into_any_element(),
-            HttpEditorTab::Headers => self.headers_table.clone().into_any_element(),
+            HttpEditorTab::Query => Table::new(&self.query_table).into_any_element(),
+            HttpEditorTab::Headers => Table::new(&self.headers_table).into_any_element(),
+            HttpEditorTab::Authorization => self.authorization_tab.clone().into_any_element(),
             _ => div().into_any_element(),
         }
     }
@@ -162,7 +182,7 @@ impl HttpEditor {
     }
 
     fn build_request<T>(&self, cx: &mut Context<Self>, body: T) -> Result<Request<T>> {
-        let method = self.method_selector.read(cx).method();
+        let method = self.method_selector.read(cx).selected_value().unwrap();
         let uri = self
             .url_input
             .read_with(cx, |this, _cx| this.value())
@@ -222,14 +242,30 @@ impl HttpEditor {
     }
 
     fn render_request_section(&self, cx: &Context<Self>) -> impl IntoElement {
-        div()
-            .h_flex()
+        h_flex()
+            .border_1()
+            .border_color(cx.theme().input)
+            .rounded(cx.theme().radius)
             .w_full()
-            .gap_4()
-            .child(self.method_selector.clone())
-            .child(TextInput::new(&self.url_input))
+            .gap_1()
+            .child(
+                div().w(px(140.)).child(
+                    Select::new(&self.method_selector)
+                        .flex_1()
+                        .appearance(false)
+                        .py_2()
+                        .pl_3(),
+                ),
+            )
+            .child(Divider::vertical())
+            .child(
+                div()
+                    .flex_1()
+                    .child(Input::new(&self.url_input).appearance(false).pr_3().py_2()),
+            )
             .child(
                 Button::new("execute")
+                    .ml_2()
                     .when_else(
                         self.is_executing(),
                         |this| this.label("Cancel"),
@@ -269,7 +305,7 @@ impl Render for HttpEditor {
             .child(self.render_request_section(cx))
             .child(
                 TabBar::new("Tabs")
-                    .segmented()
+                    .underline()
                     .selected_index(self.current_tab.into())
                     .on_click(cx.listener(|this, index, _, cx| {
                         this.activate_tab(*index, cx);

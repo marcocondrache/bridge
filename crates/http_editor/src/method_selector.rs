@@ -1,86 +1,76 @@
-use gpui::http_client::{Method, http};
-use gpui::{
-    App, AppContext, Context, Entity, InteractiveElement, IntoElement, ParentElement, Render,
-    Window, actions, div,
-};
-use gpui_component::Sizable;
-use gpui_component::button::Button;
-use gpui_component::popup_menu::PopupMenuExt;
+use gpui::{SharedString, actions};
+use gpui_component::select::{SelectDelegate, SelectItem};
 
 actions!(
     http_method_selector,
     [Get, Post, Put, Delete, Patch, Options]
 );
 
-pub struct MethodSelector {
-    method: http::Method,
-}
+#[derive(Clone)]
+pub struct Method(http::Method);
 
-impl MethodSelector {
-    pub fn new(cx: &mut App) -> Entity<Self> {
-        let this = cx.new(|_| Self {
-            method: http::Method::GET,
-        });
-
-        this
-    }
-
-    pub fn method(&self) -> http::Method {
-        self.method.clone()
-    }
-
-    fn get(&mut self, _: &Get, _window: &mut Window, cx: &mut Context<Self>) {
-        self.method = Method::GET;
-        cx.notify();
-    }
-
-    fn post(&mut self, _: &Post, _window: &mut Window, cx: &mut Context<Self>) {
-        self.method = Method::POST;
-        cx.notify();
-    }
-
-    fn put(&mut self, _: &Put, _window: &mut Window, cx: &mut Context<Self>) {
-        self.method = Method::PUT;
-        cx.notify();
-    }
-
-    fn delete(&mut self, _: &Delete, _window: &mut Window, cx: &mut Context<Self>) {
-        self.method = Method::DELETE;
-        cx.notify();
-    }
-
-    fn patch(&mut self, _: &Patch, _window: &mut Window, cx: &mut Context<Self>) {
-        self.method = Method::PATCH;
-        cx.notify();
-    }
-
-    fn options(&mut self, _: &Options, _window: &mut Window, cx: &mut Context<Self>) {
-        self.method = Method::OPTIONS;
-        cx.notify();
+impl From<Method> for SharedString {
+    fn from(value: Method) -> Self {
+        value.0.to_string().into()
     }
 }
 
-impl Render for MethodSelector {
-    fn render(&mut self, _window: &mut gpui::Window, cx: &mut Context<Self>) -> impl IntoElement {
-        div()
-            .on_action(cx.listener(Self::get))
-            .on_action(cx.listener(Self::post))
-            .on_action(cx.listener(Self::put))
-            .on_action(cx.listener(Self::delete))
-            .on_action(cx.listener(Self::patch))
-            .on_action(cx.listener(Self::options))
-            .child(
-                Button::new("Method Selector")
-                    .label(self.method.to_string())
-                    .large()
-                    .popup_menu(|menu, _window, _cx| {
-                        menu.menu("GET", Box::new(Get))
-                            .menu("POST", Box::new(Post))
-                            .menu("PUT", Box::new(Put))
-                            .menu("DELETE", Box::new(Delete))
-                            .menu("PATCH", Box::new(Patch))
-                            .menu("OPTIONS", Box::new(Options))
-                    }),
-            )
+impl Method {
+    pub fn all() -> [Self; 6] {
+        [
+            Method(http::Method::GET),
+            Method(http::Method::POST),
+            Method(http::Method::PUT),
+            Method(http::Method::DELETE),
+            Method(http::Method::PATCH),
+            Method(http::Method::OPTIONS),
+        ]
+    }
+}
+
+impl SelectItem for Method {
+    type Value = http::Method;
+
+    fn title(&self) -> SharedString {
+        self.clone().into()
+    }
+
+    fn value(&self) -> &Self::Value {
+        &self.0
+    }
+}
+
+pub struct MethodDelegator {
+    items: [Method; 6],
+}
+
+impl MethodDelegator {
+    pub fn new() -> Self {
+        Self {
+            items: Method::all(),
+        }
+    }
+}
+
+impl SelectDelegate for MethodDelegator {
+    type Item = Method;
+
+    fn items_count(&self, _section: usize) -> usize {
+        self.items.len()
+    }
+
+    fn item(&self, ix: gpui_component::IndexPath) -> Option<&Self::Item> {
+        self.items.get(ix.row)
+    }
+
+    fn position<V>(&self, value: &V) -> Option<gpui_component::IndexPath>
+    where
+        Self::Item: SelectItem<Value = V>,
+        V: PartialEq,
+    {
+        self.items
+            .iter()
+            .position(|item| item.value() == value)
+            .map(|row| gpui_component::IndexPath::new(row))
     }
 }

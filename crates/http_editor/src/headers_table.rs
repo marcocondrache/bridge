@@ -1,15 +1,14 @@
-use gpui::{ParentElement, div, prelude::FluentBuilder};
+use gpui::{App, ParentElement, div, prelude::FluentBuilder};
 use gpui_component::{
     label::Label,
     table::{Column, TableDelegate},
 };
 use http_client::{HeaderMap, HeaderName, HeaderValue};
 use indexmap::IndexMap;
-use smallvec::SmallVec;
 
 pub struct HeadersTableDelegate {
     headers: IndexMap<Option<HeaderName>, HeaderValue>,
-    columns: SmallVec<[Column; 4]>,
+    columns: [Column; 2],
 }
 
 impl HeadersTableDelegate {
@@ -19,14 +18,14 @@ impl HeadersTableDelegate {
     pub fn new(header_map: HeaderMap) -> Self {
         Self {
             headers: IndexMap::from_iter(header_map),
-            columns: SmallVec::from_iter(Self::static_columns()),
+            columns: Self::static_columns(),
         }
     }
 
     pub fn new_editable() -> Self {
         Self {
             headers: IndexMap::new(),
-            columns: SmallVec::from_iter(Self::editable_columns()),
+            columns: Self::editable_columns(),
         }
     }
 
@@ -67,7 +66,7 @@ impl TableDelegate for HeadersTableDelegate {
         row_ix: usize,
         col_ix: usize,
         window: &mut gpui::Window,
-        cx: &mut gpui::Context<gpui_component::table::Table<Self>>,
+        cx: &mut App,
     ) -> impl gpui::IntoElement {
         let column = &self.columns[col_ix];
         let row = self.headers.get_index(row_ix);

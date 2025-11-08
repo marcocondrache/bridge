@@ -1,7 +1,7 @@
-use gpui::{ParentElement, div};
+use gpui::{App, ParentElement, div};
 use gpui_component::{
     label::Label,
-    table::{Column, Table, TableDelegate},
+    table::{Column, TableDelegate},
 };
 use indexmap::IndexMap;
 
@@ -43,7 +43,7 @@ impl TableDelegate for QueryTableDelegate {
         row_ix: usize,
         col_ix: usize,
         window: &mut gpui::Window,
-        cx: &mut gpui::Context<Table<Self>>,
+        cx: &mut App,
     ) -> impl gpui::IntoElement {
         let column = &self.columns[col_ix];
         let row = &self.params.get_index(row_ix);
