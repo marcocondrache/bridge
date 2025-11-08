@@ -168,7 +168,6 @@ impl HttpEditor {
             HttpEditorTab::Headers => Table::new(&self.headers_table).into_any_element(),
             HttpEditorTab::Authorization => self.authorization_tab.clone().into_any_element(),
             HttpEditorTab::Body => self.body.clone().into_any_element(),
-            _ => div().into_any_element(),
         }
     }
 

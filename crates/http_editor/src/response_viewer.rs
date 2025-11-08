@@ -1,18 +1,16 @@
 use gpui::{
     AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, IntoElement,
-    ParentElement, Render, Styled, Window, prelude::FluentBuilder,
+    ParentElement, Render, Styled, Window,
 };
 use gpui_component::{
-    h_flex,
     input::{Input, InputState},
-    label::Label,
     tab::{Tab, TabBar},
     table::{Table, TableState},
     tag::Tag,
     v_flex,
 };
 use http::Response;
-use http_client::{AsyncBody, ResponseExt};
+use http_client::AsyncBody;
 
 use crate::headers::HeadersTableDelegate;
 
