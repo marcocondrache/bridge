@@ -1,14 +1,13 @@
 [package]
-name = "ui"
+name = "title_bar"
 version = "0.1.0"
 publish.workspace = true
 edition.workspace = true
 
 [lib]
-path = "src/ui.rs"
+path = "src/title_bar.rs"
 
 [dependencies]
 gpui.workspace = true
-gpui-macros.workspace = true
-theme.workspace = true
-smallvec.workspace = true
+gpui-component.workspace = true
+workspace.workspace = true

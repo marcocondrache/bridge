@@ -1,5 +1,5 @@
 [package]
-name = "http"
+name = "http_client"
 version = "2.0.0"
 authors = ["Stephen M. Coakley <me@stephencoakley.com>", "Marco Mihai Condrache <52580954+marcocondrache@users.noreply.github.com>"]
 license = "MIT"
@@ -8,7 +8,7 @@ readme = "README.md"
 edition = "2024"
 
 [lib]
-path = "src/http.rs"
+path = "src/http_client.rs"
 
 [dependencies]
 log = "0.4"

@@ -56,9 +56,9 @@ pub mod prelude {
 }
 
 pub fn init(cx: &mut App) {
-    let client = HttpClientBuilder::default().build().unwrap();
-
-    cx.set_global(GlobalHttpClient(client));
+    cx.set_global(GlobalHttpClient(
+        HttpClientBuilder::default().build().unwrap(),
+    ));
 }
 
 pub struct GlobalHttpClient(HttpClient);
