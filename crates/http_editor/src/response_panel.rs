@@ -1,6 +1,6 @@
 use gpui::{
-    AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, IntoElement,
-    ParentElement, Render, Styled, Window,
+    App, AppContext, Context, Entity, FocusHandle, Focusable, IntoElement, ParentElement, Render,
+    Styled, Window, prelude::FluentBuilder,
 };
 use gpui_component::{
     input::{Input, InputState},
@@ -58,7 +58,7 @@ impl From<ResponseTab> for Tab {
 pub struct ResponsePanel {
     headers_table: Entity<TableState<HeadersTableDelegate>>,
     body: Entity<InputState>,
-    active_tab: ResponseTab,
+    selected_tab: ResponseTab,
     focus_handle: FocusHandle,
     response: Response<AsyncBody>,
 }
@@ -90,7 +90,7 @@ impl ResponsePanel {
         Self {
             body,
             headers_table: headers,
-            active_tab: ResponseTab::default(),
+            selected_tab: ResponseTab::default(),
             focus_handle,
             response,
         }
@@ -118,7 +118,7 @@ impl ResponsePanel {
     }
 
     fn activate_tab(&mut self, index: usize, cx: &mut Context<Self>) {
-        self.active_tab = ResponseTab::try_from(index).unwrap_or_default();
+        self.selected_tab = ResponseTab::try_from(index).unwrap_or_default();
 
         cx.notify();
     }
@@ -135,22 +135,23 @@ impl ResponsePanel {
         }
     }
 
-    fn render_tab(&self, _cx: &mut Context<Self>) -> AnyElement {
-        match self.active_tab {
-            ResponseTab::Body => Input::new(&self.body)
-                .h_full()
-                .disabled(true)
-                .focus_bordered(false)
-                .into_any_element(),
-            ResponseTab::Headers => Table::new(&self.headers_table).into_any_element(),
-        }
+    fn render_body_tab(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        Input::new(&self.body)
+            .h_full()
+            .disabled(true)
+            .focus_bordered(false)
+            .into_any_element()
+    }
+
+    fn render_headers_tab(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        Table::new(&self.headers_table)
     }
 }
 
 impl Render for ResponsePanel {
     fn render(
         &mut self,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
         v_flex()
@@ -160,7 +161,7 @@ impl Render for ResponsePanel {
                 TabBar::new("response_tabs")
                     .w_full()
                     .underline()
-                    .selected_index(self.active_tab.into())
+                    .selected_index(self.selected_tab.into())
                     .on_click(cx.listener(|this, index, _, cx| {
                         this.activate_tab(*index, cx);
                     }))
@@ -182,6 +183,9 @@ impl Render for ResponsePanel {
                 //         }),
                 // ),
             )
-            .child(self.render_tab(cx))
+            .map(|parent| match self.selected_tab {
+                ResponseTab::Body => parent.child(self.render_body_tab(window, cx)),
+                ResponseTab::Headers => parent.child(self.render_headers_tab(window, cx)),
+            })
     }
 }

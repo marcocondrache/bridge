@@ -8,8 +8,8 @@ mod response_panel;
 
 use anyhow::Result;
 use gpui::{
-    AnyElement, App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement,
-    IntoElement, ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
+    App, AppContext, Context, Entity, FocusHandle, Focusable, InteractiveElement, IntoElement,
+    ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
     ActiveTheme, StyledExt,
@@ -114,7 +114,7 @@ pub struct HttpEditor {
     query_table: Entity<TableState<QueryTableDelegate>>,
     headers_table: Entity<TableState<HeadersTableDelegate>>,
     authorization_tab: Entity<AuthorizationTab>,
-    current_tab: HttpEditorTab,
+    selected_tab: HttpEditorTab,
     focus_handle: FocusHandle,
 }
 
@@ -141,7 +141,7 @@ impl HttpEditor {
             authorization_tab,
             focus_handle: cx.focus_handle(),
             executing_task: None,
-            current_tab: HttpEditorTab::default(),
+            selected_tab: HttpEditorTab::default(),
         }
     }
 
@@ -160,7 +160,7 @@ impl HttpEditor {
     }
 
     fn activate_tab(&mut self, index: usize, cx: &mut Context<Self>) {
-        self.current_tab = HttpEditorTab::try_from(index).unwrap_or_default();
+        self.selected_tab = HttpEditorTab::try_from(index).unwrap_or_default();
 
         cx.notify();
     }
@@ -318,13 +318,13 @@ impl Render for HttpEditor {
             .child(
                 TabBar::new("Tabs")
                     .underline()
-                    .selected_index(self.current_tab.into())
+                    .selected_index(self.selected_tab.into())
                     .on_click(cx.listener(|this, index, _, cx| {
                         this.activate_tab(*index, cx);
                     }))
                     .children(HttpEditorTab::all()),
             )
-            .map(|parent| match &self.current_tab {
+            .map(|parent| match &self.selected_tab {
                 HttpEditorTab::Query => parent.child(self.render_query_tab(window, cx)),
                 HttpEditorTab::Headers => parent.child(self.render_headers_tab(window, cx)),
                 HttpEditorTab::Body => parent.child(self.render_body_tab(window, cx)),
