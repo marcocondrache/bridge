@@ -1,9 +1,10 @@
-mod authorization;
+mod authorization_tab;
+mod authorization_type_selector;
 mod body;
 mod headers;
 mod method_selector;
 mod query_table;
-mod response_viewer;
+mod response_panel;
 
 use anyhow::Result;
 use gpui::{
@@ -11,12 +12,12 @@ use gpui::{
     IntoElement, ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, IndexPath, StyledExt,
+    ActiveTheme, StyledExt,
     button::{Button, ButtonVariants},
     divider::Divider,
     h_flex,
     input::{Input, InputState},
-    select::{Select, SelectState},
+    select::Select,
     tab::{Tab, TabBar},
     table::{Table, TableState},
 };
@@ -25,9 +26,12 @@ use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
 use crate::{
-    authorization::AuthorizationTab, body::Body, headers::HeadersTableDelegate,
-    method_selector::MethodDelegator, query_table::QueryTableDelegate,
-    response_viewer::ResponseViewer,
+    authorization_tab::AuthorizationTab,
+    body::Body,
+    headers::HeadersTableDelegate,
+    method_selector::{MethodSelector, method_selector},
+    query_table::QueryTableDelegate,
+    response_panel::ResponsePanel,
 };
 
 pub fn init(cx: &mut App) {
@@ -104,8 +108,8 @@ impl From<HttpEditorTab> for Tab {
 pub struct HttpEditor {
     body: Entity<Body>,
     url_input: Entity<InputState>,
-    method_selector: Entity<SelectState<MethodDelegator>>,
-    response_viewer: Option<Entity<ResponseViewer>>,
+    method_selector: Entity<MethodSelector>,
+    response_viewer: Option<Entity<ResponsePanel>>,
     executing_task: Option<Task<Result<()>>>,
     query_table: Entity<TableState<QueryTableDelegate>>,
     headers_table: Entity<TableState<HeadersTableDelegate>>,
@@ -118,14 +122,7 @@ impl HttpEditor {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let this = cx.entity().downgrade();
 
-        let method_selector = cx.new(|cx| {
-            SelectState::new(
-                MethodDelegator::new(),
-                Some(IndexPath::default()),
-                window,
-                cx,
-            )
-        });
+        let method_selector = cx.new(|cx| method_selector(window, cx));
 
         let body = cx.new(|cx| Body::new(window, cx));
         let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
@@ -231,7 +228,7 @@ impl HttpEditor {
                     })
                 } else {
                     this.response_viewer =
-                        Some(cx.new(|cx| ResponseViewer::new(body, response, window, cx)));
+                        Some(cx.new(|cx| ResponsePanel::new(body, response, window, cx)));
                 }
 
                 this.executing_task = None;

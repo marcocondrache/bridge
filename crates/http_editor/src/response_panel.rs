@@ -55,7 +55,7 @@ impl From<ResponseTab> for Tab {
     }
 }
 
-pub struct ResponseViewer {
+pub struct ResponsePanel {
     headers_table: Entity<TableState<HeadersTableDelegate>>,
     body: Entity<InputState>,
     active_tab: ResponseTab,
@@ -63,13 +63,13 @@ pub struct ResponseViewer {
     response: Response<AsyncBody>,
 }
 
-impl Focusable for ResponseViewer {
+impl Focusable for ResponsePanel {
     fn focus_handle(&self, _cx: &App) -> gpui::FocusHandle {
         self.focus_handle.clone()
     }
 }
 
-impl ResponseViewer {
+impl ResponsePanel {
     pub fn new(
         body: String,
         response: Response<AsyncBody>,
@@ -147,7 +147,7 @@ impl ResponseViewer {
     }
 }
 
-impl Render for ResponseViewer {
+impl Render for ResponsePanel {
     fn render(
         &mut self,
         _window: &mut Window,
