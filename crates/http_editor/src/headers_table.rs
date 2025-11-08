@@ -7,6 +7,8 @@ use gpui::{
     prelude::FluentBuilder,
 };
 use gpui_component::{
+    IconName,
+    button::Button,
     input::{Input, InputState},
     table::{Column, TableState},
 };
@@ -14,6 +16,9 @@ use http::{HeaderName, HeaderValue};
 use indexmap::{IndexSet, set::MutableValues};
 
 use crate::dynamic_delegate::{DynamicDelegate, DynamicItems};
+
+// NOTEs: Table implementation of gpui-component it's for data display only and therefore should not be used with edits and such,
+// but for prototype purposes it's fine
 
 type HeadersMap = IndexSet<(Option<HeaderName>, HeaderValue)>;
 type HeadersRows = IndexSet<HeadersRow>;
@@ -29,6 +34,8 @@ pub fn headers_table_editor(
         DynamicDelegate::new(vec![
             Column::new(DynamicDelegate::<HeadersRows>::KEY_COLUMN, "Name"),
             Column::new(DynamicDelegate::<HeadersRows>::VALUE_COLUMN, "Value"),
+            // Column::new(DynamicDelegate::<HeadersRows>::ENABLED_COLUMN, "Enabled"),
+            Column::new(DynamicDelegate::<HeadersRows>::DELETE_COLUMN, "Delete"),
         ]),
         window,
         cx,
@@ -73,6 +80,12 @@ impl HeadersRow {
 
     pub fn render_value(&self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         Input::new(&self.value).appearance(false)
+    }
+
+    pub fn render_delete(&self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        Button::new("test")
+            .icon(IconName::Delete)
+            .on_click(|_, _, _| {})
     }
 
     pub fn get_header(&self, cx: &App) -> Result<(HeaderName, HeaderValue)> {
@@ -137,6 +150,9 @@ impl DynamicItems for HeadersRows {
             }
             DynamicDelegate::<IndexSet<HeadersRow>>::VALUE_COLUMN => {
                 parent.child(item.render_value(window, cx))
+            }
+            DynamicDelegate::<IndexSet<HeadersRow>>::DELETE_COLUMN => {
+                parent.child(item.render_delete(window, cx))
             }
             _ => parent,
         })
