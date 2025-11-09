@@ -6,8 +6,6 @@ use gpui::{
 
 use crate::utils::placement::Placement;
 
-pub const RESIZE_HANDLE_SIZE: Pixels = px(6.);
-
 #[derive(IntoElement)]
 pub struct ResizeHandle<D: Clone + Render + 'static> {
     data: D,
@@ -19,6 +17,8 @@ impl<D> ResizeHandle<D>
 where
     D: Clone + Render + 'static,
 {
+    pub const HANDLE_SIZE: Pixels = px(6.);
+
     pub fn new(data: D, placement: Placement) -> Self {
         Self {
             data,
@@ -60,14 +60,14 @@ impl<D: Clone + Render + 'static> RenderOnce for ResizeHandle<D> {
             .occlude()
             .absolute()
             .map(|handle| match axis {
-                Axis::Vertical => handle.h(RESIZE_HANDLE_SIZE).w_full().cursor_row_resize(),
-                Axis::Horizontal => handle.w(RESIZE_HANDLE_SIZE).h_full().cursor_col_resize(),
+                Axis::Vertical => handle.h(Self::HANDLE_SIZE).w_full().cursor_row_resize(),
+                Axis::Horizontal => handle.w(Self::HANDLE_SIZE).h_full().cursor_col_resize(),
             })
             .map(|handle| match &self.placement {
-                Placement::Top => handle.bottom(-RESIZE_HANDLE_SIZE / 2.).left(px(0.)),
-                Placement::Right => handle.top(px(0.)).left(-RESIZE_HANDLE_SIZE / 2.),
-                Placement::Bottom => handle.top(-RESIZE_HANDLE_SIZE / 2.).left(px(0.)),
-                Placement::Left => handle.top(px(0.)).right(-RESIZE_HANDLE_SIZE / 2.),
+                Placement::Top => handle.bottom(-Self::HANDLE_SIZE / 2.).left(px(0.)),
+                Placement::Right => handle.top(px(0.)).left(-Self::HANDLE_SIZE / 2.),
+                Placement::Bottom => handle.top(-Self::HANDLE_SIZE / 2.).left(px(0.)),
+                Placement::Left => handle.top(px(0.)).right(-Self::HANDLE_SIZE / 2.),
             })
             .map(deferred)
     }

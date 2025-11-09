@@ -10,7 +10,7 @@ use gpui::{
     Window, WindowHandle, WindowOptions, actions, canvas, div,
 };
 use gpui_component::Root;
-use ui::{components::resize_handle::RESIZE_HANDLE_SIZE, utils::placement::Placement};
+use ui::{components::resize_handle::ResizeHandle, utils::placement::Placement};
 use uuid::Uuid;
 
 use crate::{
@@ -128,12 +128,37 @@ impl Workspace {
         cx: &mut Context<Self>,
     ) {
         let dock = self.dock_at_placement(placement);
-
         let size = match placement {
-            Placement::Top => todo!(),
-            Placement::Right => todo!(),
-            Placement::Bottom => todo!(),
-            Placement::Left => new_size.min(self.bounds.right() - RESIZE_HANDLE_SIZE),
+            Placement::Top => {
+                let max_size = self.bounds.bottom()
+                    - ResizeHandle::<DraggedDock>::HANDLE_SIZE
+                    - self.bounds.top();
+                let size = new_size.min(max_size);
+
+                let opposite_dock = self.dock_at_placement(placement.opposite());
+                let opposite_size = opposite_dock.read(cx).size().unwrap_or(Pixels::ZERO);
+
+                let available_height = self.bounds.bottom() - self.bounds.top() - opposite_size;
+
+                size.min(available_height)
+            }
+            Placement::Right => {
+                let max_size = self.bounds.right() - ResizeHandle::<DraggedDock>::HANDLE_SIZE;
+                let size = new_size.min(max_size);
+
+                let opposite_dock = self.dock_at_placement(placement.opposite());
+                let opposite_size = opposite_dock.read(cx).size().unwrap_or(Pixels::ZERO);
+
+                let available_width = self.bounds.right() - opposite_size;
+
+                size.min(available_width)
+            }
+            Placement::Bottom => new_size.min(
+                self.bounds.bottom() - ResizeHandle::<DraggedDock>::HANDLE_SIZE - self.bounds.top(),
+            ),
+            Placement::Left => {
+                new_size.min(self.bounds.right() - ResizeHandle::<DraggedDock>::HANDLE_SIZE)
+            }
         };
 
         dock.update(cx, |dock, cx| {

@@ -10,6 +10,8 @@ use ui::{components::resize_handle::ResizeHandle, utils::placement::Placement};
 
 use crate::{DraggedDock, Workspace};
 
+const DEFAULT_DOCK_SIZE: Pixels = px(200.0);
+
 pub trait Panel: Render + Sized {
     fn priority(&self) -> u32;
     fn placement(&self, window: &Window, cx: &App) -> Placement;
@@ -166,6 +168,10 @@ impl Dock {
             .map(|e| &e.0)
     }
 
+    pub fn size(&self) -> Option<Pixels> {
+        self.size
+    }
+
     pub fn resize(&mut self, size: Option<Pixels>, cx: &mut Context<Self>) {
         self.size = size;
         cx.notify();
@@ -175,7 +181,7 @@ impl Dock {
 impl Render for Dock {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
         if let Some(panel) = self.visibile_panel() {
-            let size = self.size.unwrap_or(px(200.0));
+            let size = self.size.unwrap_or(DEFAULT_DOCK_SIZE);
             let dock = cx.entity().downgrade();
             let resize_handle = ResizeHandle::new(DraggedDock(self.placement()), self.placement())
                 .on_double_click(move |_, cx| {
