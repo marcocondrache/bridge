@@ -1,15 +1,18 @@
 use std::{cmp::Ordering, convert::identity, sync::Arc};
 
 use gpui::{
-    AnyView, App, AppContext, Axis, Context, Entity, ParentElement, Pixels, Render, SharedString,
-    StyleRefinement, Styled, Subscription, WeakEntity, Window, div, prelude::FluentBuilder, px,
+    AnyView, App, AppContext, Axis, Context, Entity, FocusHandle, Focusable, InteractiveElement,
+    ParentElement, Pixels, Render, SharedString, StyleRefinement, Styled, Subscription, WeakEntity,
+    Window, div, prelude::FluentBuilder, px,
 };
-use gpui_component::{ActiveTheme, Placement, StyledExt};
+use gpui_component::{ActiveTheme, StyledExt};
+use ui::{components::resize_handle::ResizeHandle, utils::placement::Placement};
 
-use crate::Workspace;
+use crate::{DraggedDock, Workspace};
 
 pub trait Panel: Render + Sized {
     fn priority(&self) -> u32;
+    fn placement(&self, window: &Window, cx: &App) -> Placement;
 
     fn tab_name(&self, cx: &App) -> Option<SharedString> {
         None
@@ -26,6 +29,7 @@ pub trait Panel: Render + Sized {
 
 pub trait PanelHandle: Send + Sync {
     fn priority(&self, cx: &App) -> u32;
+    fn placement(&self, window: &Window, cx: &App) -> Placement;
     fn tab_name(&self, cx: &App) -> Option<SharedString>;
     fn closable(&self, cx: &App) -> bool;
     fn visible(&self, cx: &App) -> bool;
@@ -35,6 +39,10 @@ pub trait PanelHandle: Send + Sync {
 impl<T: Panel> PanelHandle for Entity<T> {
     fn priority(&self, cx: &App) -> u32 {
         self.read(cx).priority()
+    }
+
+    fn placement(&self, window: &Window, cx: &App) -> Placement {
+        self.read(cx).placement(window, cx)
     }
 
     fn to_any(&self) -> AnyView {
@@ -56,25 +64,38 @@ impl<T: Panel> PanelHandle for Entity<T> {
 
 pub struct Dock {
     is_open: bool,
+    size: Option<Pixels>,
     placement: Placement,
     workspace: WeakEntity<Workspace>,
     items: Vec<(Arc<dyn PanelHandle>, Subscription)>,
-    size: Pixels,
-    current_index: Option<usize>,
+    active_panel_index: Option<usize>,
+    focus_handle: FocusHandle,
+}
+
+impl Focusable for Dock {
+    fn focus_handle(&self, cx: &App) -> FocusHandle {
+        self.focus_handle.clone()
+    }
 }
 
 impl Dock {
     pub fn new(placement: Placement, cx: &mut Context<Workspace>) -> Entity<Self> {
+        let focus_handle = cx.focus_handle();
         let workspace = cx.entity();
 
         cx.new(|_cx| Self {
             placement,
             workspace: workspace.downgrade(),
-            is_open: false,
+            is_open: true,
+            size: None,
             items: Vec::new(),
-            size: px(200.),
-            current_index: None,
+            active_panel_index: None,
+            focus_handle,
         })
+    }
+
+    pub fn placement(&self) -> Placement {
+        self.placement
     }
 
     pub fn is_open(&self) -> bool {
@@ -98,7 +119,7 @@ impl Dock {
             .binary_search_by_key(&panel.priority(cx), |item| item.0.priority(cx))
             .unwrap_or_else(identity);
 
-        if let Some(current) = self.current_index.as_mut()
+        if let Some(current) = self.active_panel_index.as_mut()
             && *current >= index
         {
             *current += 1;
@@ -114,52 +135,78 @@ impl Dock {
     pub fn remove_panel(&mut self, index: usize) {
         let _ = self.items.remove(index);
 
-        if let Some(current) = self.current_index.as_mut() {
+        if let Some(current) = self.active_panel_index.as_mut() {
             match index.cmp(current) {
                 Ordering::Less => *current -= 1,
-                Ordering::Equal => self.current_index = None,
+                Ordering::Equal => self.active_panel_index = None,
                 _ => {}
             }
         }
     }
 
     pub fn display_panel(&mut self, index: usize, cx: &mut Context<Self>) {
-        self.current_index = Some(index);
+        self.active_panel_index = Some(index);
 
         cx.notify();
     }
 
     pub fn visibile_panel(&self) -> Option<&Arc<dyn PanelHandle>> {
         self.is_open
-            .then(|| self.current_index.and_then(|index| self.items.get(index)))
+            .then(|| {
+                self.active_panel_index
+                    .and_then(|index| self.items.get(index))
+            })
             .flatten()
             .map(|e| &e.0)
     }
 
     pub fn active_panel(&self) -> Option<&Arc<dyn PanelHandle>> {
-        self.current_index
+        self.active_panel_index
             .and_then(|index| self.items.get(index))
             .map(|e| &e.0)
+    }
+
+    pub fn resize(&mut self, size: Option<Pixels>, cx: &mut Context<Self>) {
+        self.size = size;
+        cx.notify();
     }
 }
 
 impl Render for Dock {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
         if let Some(panel) = self.visibile_panel() {
+            let size = self.size.unwrap_or(px(200.0));
+            let resize_handle = ResizeHandle::new(DraggedDock(self.placement()), self.placement());
+
             div()
+                .track_focus(&self.focus_handle(cx))
                 .flex()
                 .bg(cx.theme().background)
                 .border_color(cx.theme().border)
                 .overflow_hidden()
                 .map(|this| match self.placement.axis() {
-                    Axis::Vertical => this.h_full().flex_row().w(self.size),
-                    Axis::Horizontal => this.w_full().flex_col().h(self.size),
+                    Axis::Vertical => this.h(size).w_full().flex_col(),
+                    Axis::Horizontal => this.w(size).h_full().flex_row(),
+                })
+                .map(|this| match self.placement() {
+                    Placement::Left => this.border_r_1(),
+                    Placement::Right => this.border_l_1(),
+                    Placement::Bottom => this.border_t_1(),
+                    Placement::Top => this.border_b_1(),
                 })
                 .child(
-                    panel
-                        .to_any()
-                        .cached(StyleRefinement::default().v_flex().size_full()),
+                    div()
+                        .map(|this| match self.placement().axis() {
+                            Axis::Horizontal => this.min_w(size).h_full(),
+                            Axis::Vertical => this.min_h(size).w_full(),
+                        })
+                        .child(
+                            panel
+                                .to_any()
+                                .cached(StyleRefinement::default().v_flex().size_full()),
+                        ),
                 )
+                .child(resize_handle)
         } else {
             div()
         }

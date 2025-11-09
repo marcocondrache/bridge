@@ -7,6 +7,7 @@ use gpui::{
     App, AppContext, Context, TitlebarOptions, Window, WindowKind, WindowOptions, point, px,
 };
 
+use ui::utils::placement::Placement;
 use uuid::Uuid;
 
 pub use app_menus::*;
@@ -27,17 +28,12 @@ pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
 
 pub fn initialize_panels(window: &mut Window, cx: &mut Context<Workspace>) {
     cx.spawn_in(window, async move |handle, cx| {
-        let collection_panel = cx.new(|_| Collection {}).unwrap();
+        let collection_panel = cx.new(|_| Collection::new()).unwrap();
 
         handle.update_in(cx, |workspace, window, cx| {
-            let index = workspace.add_panel(
-                collection_panel,
-                gpui_component::Placement::Left,
-                window,
-                cx,
-            );
+            let index = workspace.add_panel(collection_panel, window, cx);
 
-            workspace.activate_panel(index, gpui_component::Placement::Left, cx);
+            workspace.activate_panel(index, Placement::Left, cx);
         })
     })
     .detach();
