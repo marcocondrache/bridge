@@ -176,7 +176,14 @@ impl Render for Dock {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
         if let Some(panel) = self.visibile_panel() {
             let size = self.size.unwrap_or(px(200.0));
-            let resize_handle = ResizeHandle::new(DraggedDock(self.placement()), self.placement());
+            let dock = cx.entity().downgrade();
+            let resize_handle = ResizeHandle::new(DraggedDock(self.placement()), self.placement())
+                .on_double_click(move |_, cx| {
+                    dock.update(cx, |dock, cx| {
+                        dock.resize(None, cx);
+                    })
+                    .ok();
+                });
 
             div()
                 .track_focus(&self.focus_handle(cx))

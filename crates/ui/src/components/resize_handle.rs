@@ -27,7 +27,6 @@ where
         }
     }
 
-    /// Sets the double-click callback (typically to reset size)
     pub fn on_double_click<F>(mut self, f: F) -> Self
     where
         F: Fn(&mut Window, &mut App) + 'static,
