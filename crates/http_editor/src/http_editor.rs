@@ -315,7 +315,7 @@ impl HttpEditor {
                     .when_else(
                         self.is_executing(),
                         |this| this.label("Cancel"),
-                        |this| this.loading(true),
+                        |this| this.label("Send"),
                     )
                     .on_click(cx.listener(move |this, _, window, cx| {
                         this.handle_request(window, cx);

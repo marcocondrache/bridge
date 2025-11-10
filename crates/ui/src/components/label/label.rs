@@ -1,5 +1,6 @@
 use gpui::{
-    Div, FontWeight, IntoElement, RenderOnce, SharedString, Styled, div, prelude::FluentBuilder,
+    Div, FontWeight, IntoElement, ParentElement, RenderOnce, SharedString, Styled, div,
+    prelude::FluentBuilder,
 };
 use gpui_component::ActiveTheme;
 
@@ -41,5 +42,6 @@ impl RenderOnce for Label {
             .when(self.truncate, |this| {
                 this.overflow_x_hidden().text_ellipsis()
             })
+            .child(self.label)
     }
 }

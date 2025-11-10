@@ -8,6 +8,7 @@ use crate::{
         button::ButtonBase,
         label::{Label, SpinnerLabel},
     },
+    styles::{Sizable, Size},
     traits::{clickable::Clickable, disableable::Disableable},
 };
 
@@ -42,9 +43,7 @@ impl RenderOnce for Button {
     fn render(self, _: &mut gpui::Window, cx: &mut gpui::App) -> impl IntoElement {
         self.base.child(
             h_flex()
-                .size_full()
                 .items_center()
-                .justify_center()
                 .when_some(self.label.filter(|_| !self.loading), |parent, label| {
                     parent.child(Label::new(label))
                 })
@@ -71,6 +70,13 @@ impl Clickable for Button {
 
     fn cursor_style(mut self, cursor_style: gpui::CursorStyle) -> Self {
         self.base = self.base.cursor_style(cursor_style);
+        self
+    }
+}
+
+impl Sizable for Button {
+    fn with_size(mut self, size: Size) -> Self {
+        self.base = self.base.with_size(size);
         self
     }
 }

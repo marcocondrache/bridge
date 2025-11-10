@@ -1,16 +1,20 @@
 use gpui::{
     AnyElement, App, ClickEvent, CursorStyle, Div, ElementId, FocusHandle, InteractiveElement,
-    IntoElement, MouseButton, ParentElement, RenderOnce, StatefulInteractiveElement, Styled,
-    Window, div, prelude::FluentBuilder, px,
+    IntoElement, MouseButton, ParentElement, Pixels, RenderOnce, StatefulInteractiveElement,
+    Styled, Window, div, prelude::FluentBuilder, px,
 };
 use smallvec::SmallVec;
 
-use crate::traits::{clickable::Clickable, disableable::Disableable, styled_ext::StyledExt};
+use crate::{
+    styles::{Sizable, Size},
+    traits::{clickable::Clickable, disableable::Disableable, styled_ext::StyledExt},
+};
 
 #[derive(IntoElement)]
 pub(crate) struct ButtonBase {
     id: ElementId,
     base: Div,
+    size: Size,
     disabled: bool,
     cursor_style: CursorStyle,
     on_click: Option<Box<dyn Fn(&ClickEvent, &mut Window, &mut App) + 'static>>,
@@ -28,16 +32,29 @@ impl ButtonBase {
             children: SmallVec::new(),
             cursor_style: CursorStyle::PointingHand,
             focus_handle: None,
+            size: Size::default(),
+        }
+    }
+
+    fn container_height(&self) -> Pixels {
+        match self.size {
+            Size::Large => px(32.0),
+            Size::Medium => px(24.0),
+            Size::Default => px(16.0),
         }
     }
 }
 
 impl RenderOnce for ButtonBase {
     fn render(self, _: &mut gpui::Window, cx: &mut gpui::App) -> impl gpui::IntoElement {
+        let size = self.container_height();
+
         self.base
             .h_flex()
             .id(self.id)
             .flex_none()
+            .items_center()
+            .h(size)
             .when_some(self.focus_handle, |this, focus_handle| {
                 this.track_focus(&focus_handle)
             })
@@ -78,6 +95,13 @@ impl Clickable for ButtonBase {
 impl Disableable for ButtonBase {
     fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
+        self
+    }
+}
+
+impl Sizable for ButtonBase {
+    fn with_size(mut self, size: Size) -> Self {
+        self.size = size;
         self
     }
 }
