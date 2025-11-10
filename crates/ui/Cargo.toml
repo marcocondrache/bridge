@@ -10,3 +10,4 @@ path = "src/ui.rs"
 [dependencies]
 gpui.workspace = true
 gpui-component.workspace = true
+smallvec.workspace = true

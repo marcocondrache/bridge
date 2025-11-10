@@ -2767,6 +2767,7 @@ dependencies = [
  "regex",
  "serde",
  "smallvec",
+ "ui",
  "url",
  "workspace",
 ]
@@ -6583,6 +6584,7 @@ version = "0.1.0"
 dependencies = [
  "gpui",
  "gpui-component",
+ "smallvec",
 ]
 
 [[package]]

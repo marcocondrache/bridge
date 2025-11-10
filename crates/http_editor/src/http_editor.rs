@@ -14,8 +14,8 @@ use gpui::{
     ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, Icon, IconName, StyledExt,
-    button::{Button, ButtonVariants},
+    ActiveTheme, IconName, StyledExt,
+    button::{Button as OldButton, ButtonVariants},
     divider::Divider,
     h_flex,
     input::{Input, InputState},
@@ -27,6 +27,10 @@ use gpui_component::{
 };
 use http::Request;
 use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
+use ui::{
+    components::{button::Button, label::SpinnerLabel},
+    traits::clickable::Clickable,
+};
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
 use crate::{
@@ -260,15 +264,13 @@ impl HttpEditor {
                 h_flex()
                     .justify_between()
                     .child(Label::new("Header List"))
-                    .child(
-                        Button::new("Add header")
-                            .icon(IconName::Plus)
-                            .on_click(cx.listener(move |this, _, window, cx| {
-                                this.headers_table.update(cx, |table, cx| {
-                                    table.delegate_mut().create_row(window, cx);
-                                })
-                            })),
-                    ),
+                    .child(OldButton::new("Add header").icon(IconName::Plus).on_click(
+                        cx.listener(move |this, _, window, cx| {
+                            this.headers_table.update(cx, |table, cx| {
+                                table.delegate_mut().create_row(window, cx);
+                            })
+                        }),
+                    )),
             )
             .child(Table::new(&self.headers_table))
     }
@@ -309,11 +311,11 @@ impl HttpEditor {
             )
             .child(
                 Button::new("execute")
-                    .ml_2()
+                    // .ml_2()
                     .when_else(
                         self.is_executing(),
                         |this| this.label("Cancel"),
-                        |this| this.label("Send").primary(),
+                        |this| this.loading(true),
                     )
                     .on_click(cx.listener(move |this, _, window, cx| {
                         this.handle_request(window, cx);
