@@ -1,4 +1,5 @@
 use gpui::{ParentElement, Pixels, Render, Styled, div, px};
+use gpui_component::IconName;
 use ui::utils::placement::Placement;
 use workspace::dock::Panel;
 
@@ -17,6 +18,10 @@ impl Panel for Collection {
 
     fn placement(&self, window: &gpui::Window, cx: &gpui::App) -> Placement {
         Placement::Left
+    }
+
+    fn icon(&self, window: &gpui::Window, cx: &gpui::App) -> Option<gpui_component::IconName> {
+        Some(IconName::Folder)
     }
 }
 

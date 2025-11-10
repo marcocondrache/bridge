@@ -5,16 +5,21 @@ use gpui::{
     ParentElement, Pixels, Render, SharedString, StyleRefinement, Styled, Subscription, WeakEntity,
     Window, div, prelude::FluentBuilder, px,
 };
-use gpui_component::{ActiveTheme, StyledExt};
+use gpui_component::{
+    ActiveTheme, IconName, StyledExt,
+    button::{Button, ButtonVariants},
+    h_flex,
+};
 use ui::{components::resize_handle::ResizeHandle, utils::placement::Placement};
 
-use crate::{DraggedDock, Workspace};
+use crate::{DraggedDock, Workspace, navigation_bar::NavigationItemView};
 
 const DEFAULT_DOCK_SIZE: Pixels = px(200.0);
 
 pub trait Panel: Render + Sized {
     fn priority(&self) -> u32;
     fn placement(&self, window: &Window, cx: &App) -> Placement;
+    fn icon(&self, window: &Window, cx: &App) -> Option<IconName>;
 
     fn tab_name(&self, cx: &App) -> Option<SharedString> {
         None
@@ -32,6 +37,7 @@ pub trait Panel: Render + Sized {
 pub trait PanelHandle: Send + Sync {
     fn priority(&self, cx: &App) -> u32;
     fn placement(&self, window: &Window, cx: &App) -> Placement;
+    fn icon(&self, window: &Window, cx: &App) -> Option<IconName>;
     fn tab_name(&self, cx: &App) -> Option<SharedString>;
     fn closable(&self, cx: &App) -> bool;
     fn visible(&self, cx: &App) -> bool;
@@ -45,6 +51,10 @@ impl<T: Panel> PanelHandle for Entity<T> {
 
     fn placement(&self, window: &Window, cx: &App) -> Placement {
         self.read(cx).placement(window, cx)
+    }
+
+    fn icon(&self, window: &Window, cx: &App) -> Option<IconName> {
+        self.read(cx).icon(window, cx)
     }
 
     fn to_any(&self) -> AnyView {
@@ -146,8 +156,8 @@ impl Dock {
         }
     }
 
-    pub fn display_panel(&mut self, index: usize, cx: &mut Context<Self>) {
-        self.active_panel_index = Some(index);
+    pub fn display_panel(&mut self, index: Option<usize>, cx: &mut Context<Self>) {
+        self.active_panel_index = index;
 
         cx.notify();
     }
@@ -225,3 +235,53 @@ impl Render for Dock {
         }
     }
 }
+
+pub struct DockButtons {
+    dock: Entity<Dock>,
+}
+
+impl DockButtons {
+    pub fn new(dock: Entity<Dock>, cx: &mut Context<Self>) -> Self {
+        cx.observe(&dock, |_, _, cx| cx.notify()).detach();
+
+        Self { dock }
+    }
+}
+
+impl Render for DockButtons {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
+        let dock = self.dock.read(cx);
+        let buttons: Vec<_> = dock
+            .items
+            .iter()
+            .enumerate()
+            .filter_map(|(i, (panel, _))| {
+                let icon = panel.icon(window, cx)?;
+                let dock_entity = self.dock.clone();
+                let is_active = dock.active_panel_index == Some(i);
+
+                Some(
+                    Button::new(i)
+                        .icon(icon)
+                        .compact()
+                        .when_else(is_active, |this| this.primary(), |this| this)
+                        .on_click(cx.listener(move |_this, _, window, cx| {
+                            dock_entity.update(cx, |dock, cx| {
+                                if is_active {
+                                    dock.toggle_open(window, cx);
+                                    dock.display_panel(None, cx);
+                                } else {
+                                    dock.set_open(true, window, cx);
+                                    dock.display_panel(Some(i), cx);
+                                }
+                            })
+                        })),
+                )
+            })
+            .collect();
+
+        h_flex().gap_1().children(buttons)
+    }
+}
+
+impl NavigationItemView for DockButtons {}

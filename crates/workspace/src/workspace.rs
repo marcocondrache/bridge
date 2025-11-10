@@ -1,5 +1,6 @@
 pub mod area;
 pub mod dock;
+pub mod navigation_bar;
 
 use std::sync::{Arc, Weak};
 
@@ -15,7 +16,8 @@ use uuid::Uuid;
 
 use crate::{
     area::{Area, ItemHandle},
-    dock::{Dock, Panel, PanelHandle},
+    dock::{Dock, DockButtons, Panel, PanelHandle},
+    navigation_bar::NavigationBar,
 };
 
 actions!(workspace, [NewHttpEditor, NewWindow]);
@@ -48,6 +50,7 @@ pub struct Workspace {
     bottom_dock: Entity<Dock>,
     center: Entity<Area>,
     titlebar_item: Option<AnyView>,
+    navigation_bar: Entity<NavigationBar>,
     bounds: Bounds<Pixels>,
     actions: Vec<Box<dyn Fn(Div, &Workspace, &mut Window, &mut Context<Self>) -> Div>>,
     _subscriptions: Vec<Subscription>,
@@ -58,6 +61,13 @@ impl Workspace {
         let left_dock = Dock::new(Placement::Left, cx);
         let bottom_dock = Dock::new(Placement::Bottom, cx);
         let center = Area::new(window, cx);
+        let left_dock_buttons = cx.new(|cx| DockButtons::new(left_dock.clone(), cx));
+        let navigation_bar = cx.new(|cx| {
+            let mut bar = NavigationBar::new(window, cx);
+            bar.add_item(left_dock_buttons, window, cx);
+
+            bar
+        });
 
         let subscriptions = vec![];
 
@@ -68,6 +78,7 @@ impl Workspace {
             actions: Default::default(),
             bounds: Default::default(),
             titlebar_item: None,
+            navigation_bar,
             _subscriptions: subscriptions,
         }
     }
@@ -99,7 +110,7 @@ impl Workspace {
         let dock = self.dock_at_placement(placement);
 
         dock.update(cx, |dock, cx| {
-            dock.display_panel(index, cx);
+            dock.display_panel(Some(index), cx);
         })
     }
 
@@ -276,6 +287,7 @@ impl Render for Workspace {
                     .flex()
                     .flex_row()
                     .h_full()
+                    .child(self.navigation_bar.clone())
                     .child(div().flex().flex_none().child(self.left_dock.clone()))
                     .child(
                         div()
