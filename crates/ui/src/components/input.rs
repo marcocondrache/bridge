@@ -1,5 +1,5 @@
-mod buffer;
 mod input;
+mod input_buffer;
 
-pub use buffer::{Buffer, BufferMode};
 pub use input::Input;
+pub use input_buffer::{BufferMode, InputBuffer};

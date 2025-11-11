@@ -9,7 +9,7 @@ pub enum BufferMode {
     /// Single line mode - newlines are converted to spaces
     SingleLine,
     /// Multiline mode - full text editing with line support
-    Multiline,
+    MultiLine,
 }
 
 /// A text buffer that handles editing operations for both single-line and multiline text.
@@ -20,7 +20,7 @@ pub enum BufferMode {
 /// The buffer can operate in two modes:
 /// - SingleLine: Newlines are automatically converted to spaces
 /// - Multiline: Full support for multiple lines with line-aware navigation
-pub struct Buffer {
+pub struct InputBuffer {
     content: Rope,
     selected_range: Range<usize>,
     selection_reversed: bool,
@@ -28,9 +28,9 @@ pub struct Buffer {
     mode: BufferMode,
 }
 
-impl Buffer {
+impl InputBuffer {
     pub fn new(content: &str) -> Self {
-        Self::with_mode(content, BufferMode::Multiline)
+        Self::with_mode(content, BufferMode::MultiLine)
     }
 
     pub fn single_line(content: &str) -> Self {
@@ -489,7 +489,7 @@ impl Buffer {
     fn sanitize_content(content: &str, mode: BufferMode) -> String {
         match mode {
             BufferMode::SingleLine => content.replace('\n', " "),
-            BufferMode::Multiline => content.to_string(),
+            BufferMode::MultiLine => content.to_string(),
         }
     }
 }
@@ -500,7 +500,7 @@ mod tests {
 
     #[test]
     fn test_new_buffer() {
-        let buffer = Buffer::new("hello");
+        let buffer = InputBuffer::new("hello");
         assert_eq!(buffer.content(), "hello");
         assert_eq!(buffer.cursor_offset(), 0);
         assert!(!buffer.has_selection());
@@ -508,19 +508,19 @@ mod tests {
 
     #[test]
     fn test_single_line_mode_sanitizes_newlines() {
-        let buffer = Buffer::single_line("hello\nworld");
+        let buffer = InputBuffer::single_line("hello\nworld");
         assert_eq!(buffer.content(), "hello world");
     }
 
     #[test]
     fn test_multiline_mode_preserves_newlines() {
-        let buffer = Buffer::new("hello\nworld");
+        let buffer = InputBuffer::new("hello\nworld");
         assert_eq!(buffer.content(), "hello\nworld");
     }
 
     #[test]
     fn test_move_cursor() {
-        let mut buffer = Buffer::new("hello");
+        let mut buffer = InputBuffer::new("hello");
         buffer.move_to_end();
         assert_eq!(buffer.cursor_offset(), 5);
 
@@ -533,7 +533,7 @@ mod tests {
 
     #[test]
     fn test_movement() {
-        let mut buffer = Buffer::new("hello");
+        let mut buffer = InputBuffer::new("hello");
         buffer.move_to(0);
 
         buffer.move_right();
@@ -545,7 +545,7 @@ mod tests {
 
     #[test]
     fn test_selection() {
-        let mut buffer = Buffer::new("hello");
+        let mut buffer = InputBuffer::new("hello");
         buffer.move_to(1);
         buffer.select_to(4);
 
@@ -555,7 +555,7 @@ mod tests {
 
     #[test]
     fn test_select_all() {
-        let mut buffer = Buffer::new("hello");
+        let mut buffer = InputBuffer::new("hello");
         buffer.select_all();
 
         assert_eq!(buffer.selected_text(), "hello");
@@ -563,7 +563,7 @@ mod tests {
 
     #[test]
     fn test_insert_text() {
-        let mut buffer = Buffer::new("hello");
+        let mut buffer = InputBuffer::new("hello");
         buffer.move_to(5);
         buffer.insert_text(" world");
 
@@ -573,7 +573,7 @@ mod tests {
 
     #[test]
     fn test_insert_replaces_selection() {
-        let mut buffer = Buffer::new("hello world");
+        let mut buffer = InputBuffer::new("hello world");
         buffer.select_all();
         buffer.insert_text("hi");
 
@@ -583,7 +583,7 @@ mod tests {
 
     #[test]
     fn test_backspace() {
-        let mut buffer = Buffer::new("hello");
+        let mut buffer = InputBuffer::new("hello");
         buffer.move_to_end();
         buffer.backspace();
 
@@ -593,7 +593,7 @@ mod tests {
 
     #[test]
     fn test_delete() {
-        let mut buffer = Buffer::new("hello");
+        let mut buffer = InputBuffer::new("hello");
         buffer.move_to(0);
         buffer.delete();
 
@@ -603,7 +603,7 @@ mod tests {
 
     #[test]
     fn test_multiline_navigation() {
-        let mut buffer = Buffer::new("hello\nworld\nfoo");
+        let mut buffer = InputBuffer::new("hello\nworld\nfoo");
         buffer.move_to(0);
 
         buffer.move_down();
@@ -618,7 +618,7 @@ mod tests {
 
     #[test]
     fn test_line_start_end() {
-        let mut buffer = Buffer::new("hello\nworld");
+        let mut buffer = InputBuffer::new("hello\nworld");
         buffer.move_to(8);
 
         buffer.move_to_line_start();
@@ -630,7 +630,7 @@ mod tests {
 
     #[test]
     fn test_single_line_mode_up_down() {
-        let mut buffer = Buffer::single_line("hello");
+        let mut buffer = InputBuffer::single_line("hello");
         buffer.move_to(2);
 
         buffer.move_up();
@@ -642,7 +642,7 @@ mod tests {
 
     #[test]
     fn test_utf16_conversion() {
-        let buffer = Buffer::new("hello 🌍");
+        let buffer = InputBuffer::new("hello 🌍");
         let char_offset = 6;
         let utf16_offset = buffer.offset_to_utf16(char_offset);
         let back_to_char = buffer.offset_from_utf16(utf16_offset);
@@ -652,7 +652,7 @@ mod tests {
 
     #[test]
     fn test_char_byte_conversion() {
-        let buffer = Buffer::new("hello 🌍");
+        let buffer = InputBuffer::new("hello 🌍");
 
         // "hello " is 6 chars, 6 bytes
         // 🌍 is 1 char, 4 bytes
@@ -665,10 +665,10 @@ mod tests {
 
     #[test]
     fn test_len_lines() {
-        let buffer = Buffer::new("hello\nworld\nfoo");
+        let buffer = InputBuffer::new("hello\nworld\nfoo");
         assert_eq!(buffer.len_lines(), 3);
 
-        let single = Buffer::single_line("hello");
+        let single = InputBuffer::single_line("hello");
         assert_eq!(single.len_lines(), 1);
     }
 }

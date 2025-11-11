@@ -9,10 +9,10 @@ use gpui::{
     rgba, size, white,
 };
 
-use super::buffer::Buffer;
+use super::input_buffer::InputBuffer;
 
 actions!(
-    input,
+    text_input,
     [
         Backspace,
         Delete,
@@ -32,7 +32,7 @@ actions!(
 );
 
 pub struct Input {
-    buffer: Buffer,
+    buffer: InputBuffer,
     placeholder: Option<SharedString>,
     last_layout: Option<ShapedLine>,
     last_bounds: Option<Bounds<Pixels>>,
@@ -44,7 +44,7 @@ impl Input {
     pub fn new(cx: &mut App) -> Self {
         Self {
             focus_handle: cx.focus_handle(),
-            buffer: Buffer::single_line(""),
+            buffer: InputBuffer::single_line(""),
             placeholder: None,
             last_layout: None,
             last_bounds: None,
@@ -55,6 +55,15 @@ impl Input {
     pub fn placeholder(mut self, placeholder: impl Into<SharedString>) -> Self {
         self.placeholder = Some(placeholder.into());
         self
+    }
+
+    pub fn content(mut self, content: &str) -> Self {
+        self.buffer = InputBuffer::single_line(content);
+        self
+    }
+
+    pub fn get_content(&self) -> String {
+        self.buffer.content()
     }
 
     fn left(&mut self, _: &Left, _: &mut Window, cx: &mut Context<Self>) {
