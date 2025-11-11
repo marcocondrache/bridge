@@ -106,8 +106,6 @@ impl InputBuffer {
         self.marked_range = None;
     }
 
-    // Movement operations
-
     pub fn move_left(&mut self) {
         if self.has_selection() {
             self.move_to(self.selected_range.start);
@@ -182,8 +180,6 @@ impl InputBuffer {
         self.selection_reversed = false;
     }
 
-    // Selection operations
-
     pub fn select_left(&mut self) {
         let cursor = self.cursor_offset();
         if cursor > 0 {
@@ -253,8 +249,6 @@ impl InputBuffer {
             self.selected_range = self.selected_range.end..self.selected_range.start;
         }
     }
-
-    // Editing operations
 
     pub fn backspace(&mut self) {
         if self.has_selection() {
@@ -352,8 +346,6 @@ impl InputBuffer {
         let clamped = self.clamp_range(range);
         self.content.slice(clamped).to_string()
     }
-
-    // Boundary and line operations
 
     fn previous_boundary(&self, offset: usize) -> usize {
         if offset == 0 {
