@@ -13,3 +13,4 @@ gpui-component.workspace = true
 smallvec.workspace = true
 unicode-segmentation.workspace = true
 ropey.workspace = true
+indexmap.workspace = true

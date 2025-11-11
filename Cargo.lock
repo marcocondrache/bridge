@@ -6601,6 +6601,7 @@ version = "0.1.0"
 dependencies = [
  "gpui",
  "gpui-component",
+ "indexmap",
  "ropey 1.6.1",
  "smallvec",
  "unicode-segmentation",
