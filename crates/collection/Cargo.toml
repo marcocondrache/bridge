@@ -11,3 +11,4 @@ path = "src/collection.rs"
 workspace.workspace = true
 gpui.workspace = true
 gpui-component.workspace = true
+ui.workspace = true

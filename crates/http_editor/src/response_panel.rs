@@ -7,14 +7,12 @@ use gpui_component::{
     input::{Input, InputState},
     label::Label,
     tab::{Tab, TabBar},
-    table::Table,
     tag::Tag,
     v_flex,
 };
 use http::Response;
 use http_client::{AsyncBody, ResponseExt};
-
-use crate::headers_table::{HeadersTable, headers_table};
+use ui::components::table::Table;
 
 #[derive(Debug, Default, Clone, PartialEq)]
 #[repr(usize)]
@@ -58,7 +56,6 @@ impl From<ResponseTab> for Tab {
 }
 
 pub struct ResponsePanel {
-    headers_table: Entity<HeadersTable>,
     body: Entity<InputState>,
     selected_tab: ResponseTab,
     focus_handle: FocusHandle,
@@ -78,15 +75,7 @@ impl ResponsePanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let headers = response.headers().clone();
-
         let focus_handle = cx.focus_handle();
-        let headers_table = cx.new(|cx| {
-            let mut table = headers_table(window, cx);
-
-            table.delegate_mut().set_headers(headers);
-            table
-        });
 
         let body = cx.new(|cx| {
             InputState::new(window, cx)
@@ -97,7 +86,6 @@ impl ResponsePanel {
 
         Self {
             body,
-            headers_table,
             focus_handle,
             response,
             selected_tab: ResponseTab::default(),
@@ -111,15 +99,9 @@ impl ResponsePanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let headers = response.headers().clone();
-
         self.response = response;
         self.body.update(cx, |editor, cx| {
             editor.set_value(body, window, cx);
-        });
-
-        self.headers_table.update(cx, |table, _cx| {
-            table.delegate_mut().set_headers(headers);
         });
 
         cx.notify();
@@ -168,7 +150,16 @@ impl ResponsePanel {
     }
 
     fn render_headers_tab(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        Table::new(&self.headers_table)
+        let headers = self.response.headers().clone();
+
+        Table::new()
+            .header(["Key", "Value"])
+            .rows(headers.into_iter().map(|(k, v)| {
+                let key = k.map(|k| k.as_str().to_string()).unwrap_or_default();
+                let value = v.to_str().unwrap();
+
+                [Label::new(key), Label::new(value.to_string())]
+            }))
     }
 }
 

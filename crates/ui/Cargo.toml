@@ -1,16 +1,13 @@
 [package]
-name = "workspace"
+name = "ui"
 version = "0.1.0"
 publish.workspace = true
 edition.workspace = true
 
 [lib]
-path = "src/workspace.rs"
+path = "src/ui.rs"
 
 [dependencies]
 gpui.workspace = true
 gpui-component.workspace = true
-anyhow.workspace = true
-uuid.workspace = true
-parking_lot.workspace = true
-ui.workspace = true
+smallvec.workspace = true
