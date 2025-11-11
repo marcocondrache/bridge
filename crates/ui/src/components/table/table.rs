@@ -1,9 +1,9 @@
 use std::ops::Range;
 
 use gpui::{
-    AnyElement, App, Div, ElementId, FocusHandle, InteractiveElement, IntoElement, Length,
-    ListHorizontalSizingBehavior, ListSizingBehavior, ParentElement, RenderOnce, Styled,
-    UniformListScrollHandle, WeakEntity, Window, div, prelude::FluentBuilder, uniform_list,
+    AnyElement, App, Div, InteractiveElement, IntoElement, Length, ListHorizontalSizingBehavior,
+    ListSizingBehavior, ParentElement, RenderOnce, Styled, Window, div, prelude::FluentBuilder,
+    uniform_list,
 };
 use gpui_component::ActiveTheme;
 

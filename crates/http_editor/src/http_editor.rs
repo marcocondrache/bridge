@@ -15,22 +15,19 @@ use gpui::{
 };
 use gpui_component::{
     ActiveTheme, IconName, StyledExt,
-    button::{Button as OldButton, ButtonVariants},
+    button::Button as OldButton,
     divider::Divider,
     h_flex,
     input::{Input, InputState},
     label::Label,
     select::Select,
-    tab::{self, Tab, TabBar},
+    tab::{Tab, TabBar},
     table::{Table, TableState},
     v_flex,
 };
 use http::Request;
 use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
-use ui::{
-    components::{button::Button, label::SpinnerLabel},
-    traits::clickable::Clickable,
-};
+use ui::{components::button::Button, traits::clickable::Clickable};
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
 use crate::{

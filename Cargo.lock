@@ -6592,6 +6592,7 @@ dependencies = [
  "gpui",
  "gpui-component",
  "smallvec",
+ "unicode-segmentation",
 ]
 
 [[package]]
