@@ -114,7 +114,7 @@ impl<const COLS: usize> Table<COLS> {
             .children(
                 items
                     .into_iter()
-                    .map(|c| Table::<COLS>::base_cell().child(c)),
+                    .map(|c| Table::<COLS>::base_cell().px_1().py_0p5().child(c)),
             );
 
         div().size_full().child(row)
@@ -146,8 +146,6 @@ impl<const COLS: usize> RenderOnce for Table<COLS> {
                         |parent| match self.rows {
                             TableRows::Eager(items) => {
                                 let count = items.len();
-
-                                print!("{} rows", count);
 
                                 parent.child(
                                     div().children(
