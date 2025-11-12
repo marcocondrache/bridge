@@ -481,7 +481,7 @@ impl InputBuffer {
     fn sanitize_content(content: &str, mode: BufferMode) -> String {
         match mode {
             BufferMode::SingleLine => content.replace('\n', " "),
-            BufferMode::MultiLine => content.to_string(),
+            BufferMode::MultiLine => content.to_owned(),
         }
     }
 }

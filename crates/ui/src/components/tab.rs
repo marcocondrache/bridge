@@ -5,7 +5,7 @@ use gpui::{
 use smallvec::SmallVec;
 
 pub struct Tab {
-    base: Stateful<Div>,
+    base: Div,
     selected: bool,
     children: SmallVec<[AnyElement; 2]>,
 }
@@ -13,7 +13,7 @@ pub struct Tab {
 impl Tab {
     pub fn new(id: impl Into<ElementId>) -> Self {
         Self {
-            base: div().id(id.into()),
+            base: div(),
             selected: false,
             children: SmallVec::new(),
         }
