@@ -50,6 +50,10 @@ impl InputBuffer {
         }
     }
 
+    pub fn is_multiline(&self) -> bool {
+        self.mode == BufferMode::MultiLine
+    }
+
     pub fn mode(&self) -> BufferMode {
         self.mode
     }

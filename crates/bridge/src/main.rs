@@ -15,6 +15,8 @@ fn main() {
     app.run(|cx| {
         gpui_component::init(cx);
 
+        ui::components::input::init(cx);
+
         http_client::init(cx);
         settings::init(cx);
 

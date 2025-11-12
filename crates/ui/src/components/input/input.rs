@@ -3,16 +3,19 @@ use std::ops::Range;
 use gpui::{
     App, Bounds, ClipboardItem, Context, CursorStyle, Element, ElementId, ElementInputHandler,
     Entity, EntityInputHandler, FocusHandle, Focusable, GlobalElementId, InteractiveElement,
-    IntoElement, LayoutId, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad,
-    ParentElement, Pixels, Point, Render, ShapedLine, SharedString, Style, Styled, TextRun,
-    UTF16Selection, UnderlineStyle, Window, actions, div, fill, hsla, point, px, relative, rgb,
-    rgba, size, white,
+    IntoElement, KeyBinding, LayoutId, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
+    PaintQuad, ParentElement, Pixels, Point, Rems, Render, ShapedLine, SharedString, Style, Styled,
+    TextRun, UTF16Selection, UnderlineStyle, Window, actions, div, fill, hsla, point, px, relative,
+    rgb, rgba, size, white,
 };
+use gpui_component::ActiveTheme;
 
 use super::input_buffer::InputBuffer;
 
+pub(super) const CONTEXT: &str = "Input";
+
 actions!(
-    text_input,
+    t_input,
     [
         Backspace,
         Delete,
@@ -30,6 +33,33 @@ actions!(
         Quit,
     ]
 );
+
+pub fn init(cx: &mut App) {
+    cx.bind_keys([
+        KeyBinding::new("backspace", Backspace, Some(CONTEXT)),
+        KeyBinding::new("delete", Delete, Some(CONTEXT)),
+        KeyBinding::new("shift-left", SelectLeft, Some(CONTEXT)),
+        KeyBinding::new("shift-right", SelectRight, Some(CONTEXT)),
+        #[cfg(target_os = "macos")]
+        KeyBinding::new("ctrl-cmd-space", ShowCharacterPalette, Some(CONTEXT)),
+        #[cfg(target_os = "macos")]
+        KeyBinding::new("cmd-a", SelectAll, Some(CONTEXT)),
+        #[cfg(not(target_os = "macos"))]
+        KeyBinding::new("ctrl-a", SelectAll, Some(CONTEXT)),
+        #[cfg(target_os = "macos")]
+        KeyBinding::new("cmd-c", Copy, Some(CONTEXT)),
+        #[cfg(not(target_os = "macos"))]
+        KeyBinding::new("ctrl-c", Copy, Some(CONTEXT)),
+        #[cfg(target_os = "macos")]
+        KeyBinding::new("cmd-x", Cut, Some(CONTEXT)),
+        #[cfg(not(target_os = "macos"))]
+        KeyBinding::new("ctrl-x", Cut, Some(CONTEXT)),
+        #[cfg(target_os = "macos")]
+        KeyBinding::new("cmd-v", Paste, Some(CONTEXT)),
+        #[cfg(not(target_os = "macos"))]
+        KeyBinding::new("ctrl-v", Paste, Some(CONTEXT)),
+    ]);
+}
 
 pub struct Input {
     buffer: InputBuffer,
@@ -64,6 +94,10 @@ impl Input {
 
     pub fn get_content(&self) -> String {
         self.buffer.content()
+    }
+
+    pub fn is_multiline(&self) -> bool {
+        self.buffer.is_multiline()
     }
 
     fn left(&mut self, _: &Left, _: &mut Window, cx: &mut Context<Self>) {
@@ -201,9 +235,11 @@ impl Focusable for Input {
 
 impl Render for Input {
     fn render(&mut self, _: &mut gpui::Window, cx: &mut gpui::Context<Self>) -> impl IntoElement {
+        let theme = cx.theme();
+
         div()
             .flex()
-            .key_context("TextInput")
+            .key_context(CONTEXT)
             .track_focus(&self.focus_handle(cx))
             .cursor(CursorStyle::IBeam)
             .on_action(cx.listener(Self::backspace))
@@ -223,15 +259,15 @@ impl Render for Input {
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_move(cx.listener(Self::on_mouse_move))
-            .bg(rgb(0xeeeeee))
-            .line_height(px(30.))
-            .text_size(px(24.))
+            .items_center()
+            .bg(theme.input)
+            .line_height(Rems(1.25))
             .child(
                 div()
                     .h(px(30. + 4. * 2.))
                     .w_full()
                     .p(px(4.))
-                    .bg(white())
+                    .bg(theme.background)
                     .child(InputElement { input: cx.entity() }),
             )
     }

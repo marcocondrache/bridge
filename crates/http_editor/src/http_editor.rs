@@ -18,17 +18,16 @@ use gpui_component::{
     button::Button as OldButton,
     divider::Divider,
     h_flex,
-    input::{Input, InputState},
     label::Label,
     select::Select,
     tab::{Tab, TabBar},
-    table::{Table, TableState},
+    table::Table,
     v_flex,
 };
 use http::Request;
 use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
 use ui::{
-    components::{button::Button, table::TableKV},
+    components::{button::Button, input::Input, table::TableKV},
     traits::clickable::Clickable,
 };
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
@@ -38,7 +37,6 @@ use crate::{
     body_tab::BodyTab,
     headers_table::{HeadersTableEditor, headers_table_editor},
     method_selector::{MethodSelector, method_selector},
-    query_table::QueryTableDelegate,
     response_panel::ResponsePanel,
 };
 
@@ -115,7 +113,7 @@ impl From<HttpEditorTab> for Tab {
 
 pub struct HttpEditor {
     body_tab: Entity<BodyTab>,
-    url_input: Entity<InputState>,
+    url_input: Entity<Input>,
     method_selector: Entity<MethodSelector>,
     response_viewer: Option<Entity<ResponsePanel>>,
     executing_task: Option<Task<Result<()>>>,
@@ -133,7 +131,7 @@ impl HttpEditor {
         let method_selector = cx.new(|cx| method_selector(window, cx));
 
         let body = cx.new(|cx| BodyTab::new(window, cx));
-        let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
+        let target_uri = cx.new(|cx| Input::new(cx).placeholder("Enter URL"));
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
         let query_table = cx.new(|cx| TableKV::new(cx));
         let headers_table = cx.new(|cx| headers_table_editor(window, cx));
@@ -193,7 +191,7 @@ impl HttpEditor {
         let method = self.method_selector.read(cx).selected_value().unwrap();
         let uri = self
             .url_input
-            .read_with(cx, |this, _cx| this.value())
+            .read_with(cx, |this, _cx| this.get_content())
             .to_string();
 
         let mut builder = Request::builder().method(method).uri(uri);
@@ -304,11 +302,7 @@ impl HttpEditor {
                 ),
             )
             .child(Divider::vertical())
-            .child(
-                div()
-                    .flex_1()
-                    .child(Input::new(&self.url_input).appearance(false).pr_3().py_2()),
-            )
+            .child(div().flex_1().child(self.url_input.clone()))
             .child(
                 Button::new("execute")
                     // .ml_2()
