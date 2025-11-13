@@ -1,4 +1,5 @@
 mod app_menus;
+mod component_story;
 
 use std::sync::Arc;
 
@@ -13,6 +14,8 @@ use uuid::Uuid;
 pub use app_menus::*;
 use workspace::{AppState, Workspace};
 
+use crate::bridge::component_story::ComponentStory;
+
 pub fn init(cx: &mut App) {}
 
 pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
@@ -20,6 +23,10 @@ pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
         let Some(window) = window else {
             return;
         };
+
+        let component = cx.new(|cx| ComponentStory::new(cx));
+
+        workspace.add_item(Box::new(component), window, cx);
 
         initialize_panels(window, cx);
     })

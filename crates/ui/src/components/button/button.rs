@@ -2,6 +2,8 @@ use gpui::{
     ElementId, IntoElement, ParentElement, RenderOnce, SharedString, Styled, prelude::FluentBuilder,
 };
 use gpui_component::h_flex;
+use ui_component::Component;
+use ui_macros::RegisterComponent;
 
 use crate::{
     components::{
@@ -12,7 +14,7 @@ use crate::{
     traits::{clickable::Clickable, disableable::Disableable},
 };
 
-#[derive(IntoElement)]
+#[derive(IntoElement, RegisterComponent)]
 pub struct Button {
     base: ButtonBase,
     label: Option<SharedString>,
@@ -80,3 +82,5 @@ impl Sizable for Button {
         self
     }
 }
+
+impl Component for Button {}

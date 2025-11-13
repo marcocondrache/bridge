@@ -41,16 +41,16 @@ use crate::{
 };
 
 pub fn init(cx: &mut App) {
-    cx.observe_new(|workspace: &mut Workspace, window, cx| {
-        // workspace.register_action(|workspace, _: &NewHttpEditor, window, cx| {
-        //     println!("Action called");
+    // cx.observe_new(|workspace: &mut Workspace, window, cx| {
+    //     // workspace.register_action(|workspace, _: &NewHttpEditor, window, cx| {
+    //     //     println!("Action called");
 
-        //     HttpEditor::new_in_workspace(workspace, window, cx);
-        // });
+    //     //     HttpEditor::new_in_workspace(workspace, window, cx);
+    //     // });
 
-        HttpEditor::new_in_workspace(workspace, window.unwrap(), cx);
-    })
-    .detach();
+    //     HttpEditor::new_in_workspace(workspace, window.unwrap(), cx);
+    // })
+    // .detach();
 
     cx.on_action(|&NewHttpEditor, cx| {
         if let Some(app_state) = AppState::global(cx).upgrade() {

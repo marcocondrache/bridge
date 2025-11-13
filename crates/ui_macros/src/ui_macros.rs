@@ -1,0 +1,26 @@
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{DeriveInput, parse_macro_input};
+
+#[proc_macro_derive(RegisterComponent)]
+pub fn derive_register_component(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let name = input.ident;
+    let register_fn_name = syn::Ident::new(
+        &format!("__component_registry_internal_register_{}", name),
+        name.span(),
+    );
+    let expanded = quote! {
+        #[allow(non_snake_case)]
+        fn #register_fn_name() {
+            ui_component::register_component::<#name>();
+        }
+
+        ui_component::__private::inventory::submit! {
+            ui_component::ComponentFn::new(#register_fn_name)
+        }
+    };
+
+    expanded.into()
+}

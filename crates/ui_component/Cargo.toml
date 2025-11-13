@@ -1,0 +1,13 @@
+[package]
+name = "ui_component"
+version = "0.1.0"
+publish.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/ui_component.rs"
+
+[dependencies]
+gpui.workspace = true
+inventory.workspace = true
+parking_lot.workspace = true

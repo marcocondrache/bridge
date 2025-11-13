@@ -14,3 +14,5 @@ smallvec.workspace = true
 unicode-segmentation.workspace = true
 ropey.workspace = true
 indexmap.workspace = true
+ui_component.workspace = true
+ui_macros.workspace = true
