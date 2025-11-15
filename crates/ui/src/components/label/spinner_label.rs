@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use gpui::{Animation, AnimationExt, IntoElement, RenderOnce};
 
-use crate::components::label::Label;
+use crate::{components::label::Label, traits::SemanticColor};
 
 const FRAMES: [&'static str; 8] = ["◐", "◓", "◑", "◒", "◐", "◓", "◑", "◒"];
 const DURATION: Duration = Duration::from_millis(600);
@@ -19,6 +19,13 @@ impl SpinnerLabel {
             base: Label::new(FRAMES[0]),
             duration: DURATION,
         }
+    }
+}
+
+impl SemanticColor for SpinnerLabel {
+    fn semantic_variant(mut self, variant: crate::prelude::Semantic) -> Self {
+        self.base = self.base.semantic_variant(variant);
+        self
     }
 }
 

@@ -37,13 +37,17 @@ impl Button {
 
 impl RenderOnce for Button {
     fn render(self, _: &mut gpui::Window, cx: &mut gpui::App) -> impl IntoElement {
+        let semantic = self.base.semantic.clone();
+
         self.base.child(
             h_flex()
                 .items_center()
                 .when_some(self.label.filter(|_| !self.loading), |parent, label| {
-                    parent.child(Label::new(label))
+                    parent.child(Label::new(label).semantic_variant(semantic))
                 })
-                .when(self.loading, |this| this.child(SpinnerLabel::new())),
+                .when(self.loading, |this| {
+                    this.child(SpinnerLabel::new().semantic_variant(semantic))
+                }),
         )
     }
 }

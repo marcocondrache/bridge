@@ -12,9 +12,9 @@ use crate::prelude::*;
 pub(crate) struct ButtonBase {
     id: ElementId,
     base: Div,
-    size: Size,
-    layout: Layout,
-    semantic: Semantic,
+    pub(crate) size: Size,
+    pub(crate) layout: Layout,
+    pub(crate) semantic: Semantic,
     disabled: bool,
     cursor_style: CursorStyle,
     on_click: Option<Box<dyn Fn(&ClickEvent, &mut Window, &mut App) + 'static>>,
