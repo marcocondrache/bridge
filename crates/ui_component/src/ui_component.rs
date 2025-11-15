@@ -1,7 +1,11 @@
+mod showcase;
+
 use std::{collections::HashMap, sync::LazyLock};
 
 use gpui::{AnyElement, App, SharedString, Window};
 use parking_lot::RwLock;
+
+pub use showcase::*;
 
 pub static COMPONENTS: LazyLock<RwLock<ComponentRegistry>> =
     LazyLock::new(|| RwLock::new(ComponentRegistry::default()));
@@ -28,11 +32,11 @@ pub fn registry() -> ComponentRegistry {
 
 pub fn register_component<T: Component>() {
     let id = T::id();
-    let entry = ComponentEntry {
+    let entry = RegisteredComponent {
         id: id.clone(),
         name: SharedString::new_static(T::name()),
         description: T::description().map(Into::into),
-        story: Some(T::story),
+        showcase: Some(T::showcase),
     };
 
     let mut guard = COMPONENTS.write();
@@ -50,24 +54,24 @@ pub struct ComponentId(&'static str);
 
 #[derive(Default, Clone)]
 pub struct ComponentRegistry {
-    components: HashMap<ComponentId, ComponentEntry>,
+    components: HashMap<ComponentId, RegisteredComponent>,
 }
 
 impl ComponentRegistry {
-    pub fn component_map(&self) -> HashMap<ComponentId, ComponentEntry> {
+    pub fn component_map(&self) -> HashMap<ComponentId, RegisteredComponent> {
         self.components.clone()
     }
 }
 
 #[derive(Clone)]
-pub struct ComponentEntry {
+pub struct RegisteredComponent {
     id: ComponentId,
     name: SharedString,
     description: Option<SharedString>,
-    story: Option<fn(&mut Window, &mut App) -> Option<AnyElement>>,
+    showcase: Option<fn(&mut Window, &mut App) -> Option<AnyElement>>,
 }
 
-impl ComponentEntry {
+impl RegisteredComponent {
     pub fn id(&self) -> ComponentId {
         self.id.clone()
     }
@@ -80,8 +84,8 @@ impl ComponentEntry {
         self.description.as_ref()
     }
 
-    pub fn story(&self) -> Option<fn(&mut Window, &mut App) -> Option<AnyElement>> {
-        self.story
+    pub fn showcase(&self) -> Option<fn(&mut Window, &mut App) -> Option<AnyElement>> {
+        self.showcase
     }
 }
 
@@ -98,7 +102,7 @@ pub trait Component {
         None
     }
 
-    fn story(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
+    fn showcase(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
         None
     }
 }

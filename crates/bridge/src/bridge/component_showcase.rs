@@ -6,16 +6,16 @@ use gpui::{
 };
 use gpui_component::ActiveTheme;
 use ui::traits::styled_ext::StyledExt;
-use ui_component::{ComponentEntry, ComponentId};
+use ui_component::{RegisteredComponent, ComponentId};
 use workspace::area::Item;
 
-pub struct ComponentStory {
+pub struct ComponentShowcase {
     active_component: Option<ComponentId>,
-    component_map: HashMap<ComponentId, ComponentEntry>,
+    component_map: HashMap<ComponentId, RegisteredComponent>,
     focus_handle: FocusHandle,
 }
 
-impl ComponentStory {
+impl ComponentShowcase {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let registry = ui_component::registry();
         let component_map = registry.component_map();
@@ -36,8 +36,8 @@ impl ComponentStory {
         let component = self.component_map.get(id);
 
         if let Some(component) = component {
-            let child = match component.story() {
-                Some(story) => story(window, cx).unwrap_or_else(|| {
+            let child = match component.showcase() {
+                Some(showcase) => showcase(window, cx).unwrap_or_else(|| {
                     div()
                         .child("Failed to load preview. This path should be unreachable")
                         .into_any_element()
@@ -63,7 +63,7 @@ impl ComponentStory {
     }
 }
 
-impl Render for ComponentStory {
+impl Render for ComponentShowcase {
     fn render(
         &mut self,
         window: &mut gpui::Window,
@@ -95,14 +95,14 @@ impl Render for ComponentStory {
     }
 }
 
-impl Focusable for ComponentStory {
+impl Focusable for ComponentShowcase {
     fn focus_handle(&self, _cx: &gpui::App) -> FocusHandle {
         self.focus_handle.clone()
     }
 }
 
-impl Item for ComponentStory {
+impl Item for ComponentShowcase {
     fn tab_title(&self, cx: &gpui::App) -> gpui::SharedString {
-        "Component Story".into()
+        "Component Showcase".into()
     }
 }

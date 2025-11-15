@@ -9,5 +9,6 @@ path = "src/ui_component.rs"
 
 [dependencies]
 gpui.workspace = true
+gpui-component.workspace = true
 inventory.workspace = true
 parking_lot.workspace = true

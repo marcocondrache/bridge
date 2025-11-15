@@ -1,8 +1,9 @@
 use gpui::{
-    ElementId, IntoElement, ParentElement, RenderOnce, SharedString, Styled, prelude::FluentBuilder,
+    ElementId, IntoElement, ParentElement, RenderOnce, SharedString, Styled, div,
+    prelude::FluentBuilder,
 };
 use gpui_component::h_flex;
-use ui_component::Component;
+use ui_component::{Component, variant, titled_group};
 use ui_macros::RegisterComponent;
 
 use crate::{
@@ -11,7 +12,7 @@ use crate::{
         label::{Label, SpinnerLabel},
     },
     styles::{Sizable, Size},
-    traits::{clickable::Clickable, disableable::Disableable},
+    traits::{clickable::Clickable, disableable::Disableable, styled_ext::StyledExt},
 };
 
 #[derive(IntoElement, RegisterComponent)]
@@ -83,4 +84,20 @@ impl Sizable for Button {
     }
 }
 
-impl Component for Button {}
+impl Component for Button {
+    fn showcase(_window: &mut gpui::Window, _cx: &mut gpui::App) -> Option<gpui::AnyElement> {
+        Some(
+            div()
+                .v_flex()
+                .gap_6()
+                .children(vec![titled_group(
+                    "Buttons",
+                    vec![variant(
+                        "Default",
+                        Button::new("default").into_any_element(),
+                    )],
+                )])
+                .into_any_element(),
+        )
+    }
+}
