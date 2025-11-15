@@ -40,7 +40,6 @@ impl RenderOnce for Variant {
                     .rounded_xl()
                     .border_1()
                     .border_color(theme.border)
-                    .bg(theme.blue)
                     .child(self.element),
             )
     }

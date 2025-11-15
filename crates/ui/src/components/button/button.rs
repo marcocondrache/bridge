@@ -3,7 +3,7 @@ use gpui::{
     prelude::FluentBuilder,
 };
 use gpui_component::h_flex;
-use ui_component::{Component, variant, titled_group};
+use ui_component::{Component, titled_group, variant};
 use ui_macros::RegisterComponent;
 
 use crate::{
@@ -91,10 +91,10 @@ impl Component for Button {
                 .v_flex()
                 .gap_6()
                 .children(vec![titled_group(
-                    "Buttons",
+                    "Button",
                     vec![variant(
                         "Default",
-                        Button::new("default").into_any_element(),
+                        Button::new("default").label("Example").into_any_element(),
                     )],
                 )])
                 .into_any_element(),

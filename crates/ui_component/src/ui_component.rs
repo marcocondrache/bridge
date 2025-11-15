@@ -49,7 +49,7 @@ pub mod __private {
     pub use inventory;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct ComponentId(&'static str);
 
 #[derive(Default, Clone)]
@@ -76,16 +76,26 @@ impl RegisteredComponent {
         self.id.clone()
     }
 
-    pub fn name(&self) -> &SharedString {
-        &self.name
+    pub fn name(&self) -> SharedString {
+        self.name.clone()
     }
 
-    pub fn description(&self) -> Option<&SharedString> {
-        self.description.as_ref()
+    pub fn description(&self) -> Option<SharedString> {
+        self.description.clone()
     }
 
     pub fn showcase(&self) -> Option<fn(&mut Window, &mut App) -> Option<AnyElement>> {
         self.showcase
+    }
+
+    pub fn scopeless_name(&self) -> SharedString {
+        self.name
+            .clone()
+            .split("::")
+            .last()
+            .unwrap_or(&self.name)
+            .to_string()
+            .into()
     }
 }
 
