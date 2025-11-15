@@ -82,7 +82,6 @@ pub struct Input {
 impl Input {
     pub fn new(cx: &mut App) -> Self {
         Self {
-            focus_handle: cx.focus_handle(),
             buffer: InputBuffer::single_line(""),
             placeholder: None,
             last_layout: None,
@@ -91,6 +90,7 @@ impl Input {
             disabled: false,
             error: None,
             is_selecting: false,
+            focus_handle: cx.focus_handle(),
         }
     }
 
