@@ -64,14 +64,14 @@ impl RenderOnce for ButtonBase {
             .py(padding_y)
             .bg(base_bg)
             .text_color(base_fg)
-            .rounded_md()
+            .rounded(theme.radius)
             .when_some(base_border, |this, color| {
                 this.border_1().border_color(color)
             })
             .when(self.layout == Layout::Block, |this| this.w_full())
             .when_else(
                 self.disabled,
-                |this| this.opacity(0.5).cursor(CursorStyle::Arrow),
+                |this| this.opacity(0.5).cursor(CursorStyle::OperationNotAllowed),
                 |this| {
                     this.cursor(self.cursor_style)
                         .hover(|style| style.bg(hover_bg))

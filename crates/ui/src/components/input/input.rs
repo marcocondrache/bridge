@@ -1,14 +1,19 @@
 use std::ops::Range;
 
 use gpui::{
-    App, Bounds, ClipboardItem, Context, CursorStyle, Element, ElementId, ElementInputHandler,
-    Entity, EntityInputHandler, FocusHandle, Focusable, GlobalElementId, InteractiveElement,
-    IntoElement, KeyBinding, LayoutId, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
-    PaintQuad, ParentElement, Pixels, Point, Rems, Render, ShapedLine, SharedString, Style, Styled,
-    TextRun, UTF16Selection, UnderlineStyle, Window, actions, div, fill, hsla, point, px, relative,
-    rgb, rgba, size, white,
+    App, AppContext, Bounds, ClipboardItem, Context, CursorStyle, Element, ElementId,
+    ElementInputHandler, Entity, EntityInputHandler, FocusHandle, Focusable, GlobalElementId,
+    InteractiveElement, IntoElement, KeyBinding, LayoutId, MouseButton, MouseDownEvent,
+    MouseMoveEvent, MouseUpEvent, PaintQuad, ParentElement, Pixels, Point, Rems, Render,
+    ShapedLine, SharedString, Style, Styled, TextRun, UTF16Selection, UnderlineStyle, Window,
+    actions, div, fill, point, prelude::FluentBuilder, px, relative, size,
 };
 use gpui_component::ActiveTheme;
+use ui_component::{Component, titled_group, variant};
+use ui_macros::RegisterComponent;
+
+use crate::prelude::*;
+use crate::variants::Size;
 
 use super::input_buffer::InputBuffer;
 
@@ -61,11 +66,15 @@ pub fn init(cx: &mut App) {
     ]);
 }
 
+#[derive(RegisterComponent)]
 pub struct Input {
     buffer: InputBuffer,
     placeholder: Option<SharedString>,
     last_layout: Option<ShapedLine>,
     last_bounds: Option<Bounds<Pixels>>,
+    size: Size,
+    disabled: bool,
+    error: Option<SharedString>,
     is_selecting: bool,
     focus_handle: FocusHandle,
 }
@@ -78,6 +87,9 @@ impl Input {
             placeholder: None,
             last_layout: None,
             last_bounds: None,
+            size: Size::default(),
+            disabled: false,
+            error: None,
             is_selecting: false,
         }
     }
@@ -227,6 +239,27 @@ impl Input {
     }
 }
 
+impl Sizable for Input {
+    fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+}
+
+impl Validatable for Input {
+    fn error(mut self, error: Option<impl Into<SharedString>>) -> Self {
+        self.error = error.map(|e| e.into());
+        self
+    }
+}
+
+impl Disableable for Input {
+    fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
+        self
+    }
+}
+
 impl Focusable for Input {
     fn focus_handle(&self, _: &gpui::App) -> FocusHandle {
         self.focus_handle.clone()
@@ -234,42 +267,68 @@ impl Focusable for Input {
 }
 
 impl Render for Input {
-    fn render(&mut self, _: &mut gpui::Window, cx: &mut gpui::Context<Self>) -> impl IntoElement {
+    fn render(
+        &mut self,
+        window: &mut gpui::Window,
+        cx: &mut gpui::Context<Self>,
+    ) -> impl IntoElement {
         let theme = cx.theme();
+        let has_error = self.error.is_some();
+
+        let height = self.size.height();
+        let padding_x = self.size.padding_x();
+        let padding_y = self.size.padding_y();
+
+        let base_bg = theme.input;
+        let base_fg = theme.foreground;
+        let base_border = if has_error {
+            theme.danger
+        } else {
+            theme.border
+        };
 
         div()
             .flex()
             .key_context(CONTEXT)
             .track_focus(&self.focus_handle(cx))
-            .cursor(CursorStyle::IBeam)
-            .on_action(cx.listener(Self::backspace))
-            .on_action(cx.listener(Self::delete))
-            .on_action(cx.listener(Self::left))
-            .on_action(cx.listener(Self::right))
-            .on_action(cx.listener(Self::select_left))
-            .on_action(cx.listener(Self::select_right))
-            .on_action(cx.listener(Self::select_all))
-            .on_action(cx.listener(Self::home))
-            .on_action(cx.listener(Self::end))
-            .on_action(cx.listener(Self::show_character_palette))
-            .on_action(cx.listener(Self::paste))
-            .on_action(cx.listener(Self::cut))
-            .on_action(cx.listener(Self::copy))
-            .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
-            .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
-            .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
-            .on_mouse_move(cx.listener(Self::on_mouse_move))
             .items_center()
-            .bg(theme.input)
+            .h(height)
+            .px(padding_x)
+            .py(padding_y)
+            .w_full()
+            .bg(base_bg)
+            .text_color(base_fg)
+            .rounded(theme.radius)
+            .border_1()
+            .border_color(base_border)
             .line_height(Rems(1.25))
-            .child(
-                div()
-                    .h(px(30. + 4. * 2.))
-                    .w_full()
-                    .p(px(4.))
-                    .bg(theme.background)
-                    .child(InputElement { input: cx.entity() }),
-            )
+            .when(self.disabled, |this| {
+                this.opacity(0.5).cursor(CursorStyle::OperationNotAllowed)
+            })
+            .when(!self.disabled, |this| {
+                this.cursor(CursorStyle::IBeam)
+                    .on_action(cx.listener(Self::backspace))
+                    .on_action(cx.listener(Self::delete))
+                    .on_action(cx.listener(Self::left))
+                    .on_action(cx.listener(Self::right))
+                    .on_action(cx.listener(Self::select_left))
+                    .on_action(cx.listener(Self::select_right))
+                    .on_action(cx.listener(Self::select_all))
+                    .on_action(cx.listener(Self::home))
+                    .on_action(cx.listener(Self::end))
+                    .on_action(cx.listener(Self::show_character_palette))
+                    .on_action(cx.listener(Self::paste))
+                    .on_action(cx.listener(Self::cut))
+                    .on_action(cx.listener(Self::copy))
+                    .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
+                    .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                    .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                    .on_mouse_move(cx.listener(Self::on_mouse_move))
+            })
+            .when(!has_error, |this| {
+                this.focus(|style| style.border_color(theme.primary))
+            })
+            .child(InputElement { input: cx.entity() })
     }
 }
 
@@ -457,6 +516,7 @@ impl Element for InputElement {
         cx: &mut App,
     ) -> Self::PrepaintState {
         let input = self.input.read(cx);
+        let theme = cx.theme();
         let placeholder = input.placeholder.clone();
         let content = input.buffer.content();
         let selected_range = input.buffer.selected_range();
@@ -464,9 +524,9 @@ impl Element for InputElement {
         let style = window.text_style();
 
         let (display_text, text_color) = if content.is_empty() {
-            (placeholder.unwrap_or_default(), hsla(0., 0., 0., 0.2))
+            (placeholder.unwrap_or_default(), theme.muted_foreground)
         } else {
-            (content.into(), style.color)
+            (content.into(), theme.foreground)
         };
 
         let run = TextRun {
@@ -509,7 +569,7 @@ impl Element for InputElement {
             vec![run]
         };
 
-        let font_size = style.font_size.to_pixels(window.rem_size());
+        let font_size = input.size.font_size();
         let line = window
             .text_system()
             .shape_line(display_text, font_size, &runs, None);
@@ -518,6 +578,7 @@ impl Element for InputElement {
         let cursor_byte = input.buffer.char_to_byte(cursor);
         let cursor_pos = line.x_for_index(cursor_byte);
 
+        let theme = cx.theme();
         let (selection, cursor) = if selected_range.is_empty() {
             (
                 None,
@@ -526,7 +587,7 @@ impl Element for InputElement {
                         point(bounds.left() + cursor_pos, bounds.top()),
                         size(px(2.), bounds.bottom() - bounds.top()),
                     ),
-                    gpui::blue(),
+                    theme.primary,
                 )),
             )
         } else {
@@ -545,7 +606,7 @@ impl Element for InputElement {
                             bounds.bottom(),
                         ),
                     ),
-                    rgba(0x3311ff30),
+                    theme.primary.opacity(0.2),
                 )),
                 None,
             )
@@ -590,5 +651,151 @@ impl Element for InputElement {
             input.last_layout = Some(line);
             input.last_bounds = Some(bounds);
         });
+    }
+}
+
+impl Component for Input {
+    fn description() -> Option<&'static str> {
+        Some(
+            "A text input component with support for single-line text editing, selection, clipboard operations, and validation states",
+        )
+    }
+
+    fn showcase(_window: &mut gpui::Window, cx: &mut gpui::App) -> Option<gpui::AnyElement> {
+        Some(
+            div()
+                .v_flex()
+                .gap_6()
+                .children(vec![
+                    titled_group(
+                        "Sizes",
+                        vec![
+                            variant(
+                                "Small",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Small input")
+                                        .content("Small text")
+                                        .small()
+                                })
+                                .into_any_element(),
+                            ),
+                            variant(
+                                "Default",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Default input")
+                                        .content("Default text")
+                                })
+                                .into_any_element(),
+                            ),
+                            variant(
+                                "Medium",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Medium input")
+                                        .content("Medium text")
+                                        .medium()
+                                })
+                                .into_any_element(),
+                            ),
+                            variant(
+                                "Large",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Large input")
+                                        .content("Large text")
+                                        .large()
+                                })
+                                .into_any_element(),
+                            ),
+                        ],
+                    ),
+                    titled_group(
+                        "States",
+                        vec![
+                            variant(
+                                "Default",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Type something...")
+                                        .content("Normal state")
+                                })
+                                .into_any_element(),
+                            ),
+                            variant(
+                                "Disabled",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Disabled input")
+                                        .content("Can't edit this")
+                                        .disabled(true)
+                                })
+                                .into_any_element(),
+                            ),
+                            variant(
+                                "With Placeholder",
+                                cx.new(|cx| Input::new(cx).placeholder("Enter your email..."))
+                                    .into_any_element(),
+                            ),
+                        ],
+                    ),
+                    titled_group(
+                        "Validation States",
+                        vec![
+                            variant(
+                                "Valid",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Email")
+                                        .content("user@example.com")
+                                        .valid(true)
+                                })
+                                .into_any_element(),
+                            ),
+                            variant(
+                                "Error",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Email")
+                                        .content("invalid-email")
+                                        .error(Some("Invalid email format"))
+                                })
+                                .into_any_element(),
+                            ),
+                            variant(
+                                "Error (Empty)",
+                                cx.new(|cx| {
+                                    Input::new(cx)
+                                        .placeholder("Required field")
+                                        .error(Some("This field is required"))
+                                })
+                                .into_any_element(),
+                            ),
+                        ],
+                    ),
+                    titled_group(
+                        "Common Use Cases",
+                        vec![
+                            variant(
+                                "Email",
+                                cx.new(|cx| Input::new(cx).placeholder("email@example.com"))
+                                    .into_any_element(),
+                            ),
+                            variant(
+                                "Search",
+                                cx.new(|cx| Input::new(cx).placeholder("Search..."))
+                                    .into_any_element(),
+                            ),
+                            variant(
+                                "Name",
+                                cx.new(|cx| Input::new(cx).placeholder("Full name"))
+                                    .into_any_element(),
+                            ),
+                        ],
+                    ),
+                ])
+                .into_any_element(),
+        )
     }
 }
