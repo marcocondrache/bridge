@@ -25,16 +25,17 @@ impl RenderOnce for Variant {
 
         div()
             .pt_2()
+            .gap_3()
             .flex()
             .flex_col()
-            .gap_3()
+            .w_full()
             .child(div().child(self.name.clone()).text_size(rems(1.0)))
             .child(
                 div()
+                    .flex()
                     .min_h(px(100.0))
                     .w_full()
                     .p_8()
-                    .flex()
                     .items_center()
                     .justify_center()
                     .border_1()
@@ -71,6 +72,7 @@ impl RenderOnce for VariantGroup {
         let theme = cx.theme();
 
         div()
+            .flex()
             .flex_col()
             .text_sm()
             .when_some(self.title, |this, title| {
