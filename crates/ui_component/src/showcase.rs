@@ -37,7 +37,6 @@ impl RenderOnce for Variant {
                     .flex()
                     .items_center()
                     .justify_center()
-                    .rounded_xl()
                     .border_1()
                     .border_color(theme.border)
                     .child(self.element),

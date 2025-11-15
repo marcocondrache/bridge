@@ -1,8 +1,9 @@
 use std::{collections::HashMap, ops::Range};
 
 use gpui::{
-    ClickEvent, Context, FocusHandle, Focusable, InteractiveElement, IntoElement, ParentElement,
-    Render, StatefulInteractiveElement, Styled, Window, div, prelude::FluentBuilder, px,
+    ClickEvent, Context, CursorStyle, FocusHandle, Focusable, InteractiveElement, IntoElement,
+    ParentElement, Render, StatefulInteractiveElement, Styled, Window, div, prelude::FluentBuilder,
+    px,
 };
 use gpui_component::ActiveTheme;
 use ui::traits::styled_ext::StyledExt;
@@ -37,14 +38,22 @@ impl ComponentShowcase {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> impl IntoElement + use<> {
+        let theme = cx.theme();
         let component = self.component_map.get(&id);
 
         if let Some(component) = component {
             div()
-                .id("ccc")
+                .id(component.name())
                 .on_click(cx.listener({
                     move |this, _: &ClickEvent, _, _| this.active_component = Some(id)
                 }))
+                .h_flex()
+                .px_6()
+                .w_full()
+                .relative()
+                .cursor(CursorStyle::PointingHand)
+                .hover(|style| style.bg(theme.secondary_hover))
+                .active(|style| style.bg(theme.secondary_active))
                 .child(component.scopeless_name().clone())
                 .into_any_element()
         } else {
