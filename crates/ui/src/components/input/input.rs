@@ -521,7 +521,7 @@ impl Element for InputElement {
         let content = input.buffer.content();
         let selected_range = input.buffer.selected_range();
         let cursor = input.buffer.cursor_offset();
-        let style = window.text_style();
+        let text_style = window.text_style();
 
         let (display_text, text_color) = if content.is_empty() {
             (placeholder.unwrap_or_default(), theme.muted_foreground)
@@ -531,7 +531,7 @@ impl Element for InputElement {
 
         let run = TextRun {
             len: display_text.len(),
-            font: style.font(),
+            font: text_style.font(),
             color: text_color,
             background_color: None,
             underline: None,
