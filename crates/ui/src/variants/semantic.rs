@@ -33,8 +33,8 @@ impl Semantic {
             Self::Default => theme.background,
             Self::Primary => theme.primary,
             Self::Secondary => theme.secondary,
-            Self::Destructive => theme.muted, // Using muted as fallback since destructive doesn't exist
-            Self::Ghost | Self::Outline => hsla(0.0, 0.0, 0.0, 0.0),
+            Self::Destructive => theme.danger,
+            Self::Ghost | Self::Outline => transparent_white(),
         }
     }
 
@@ -44,9 +44,9 @@ impl Semantic {
 
         match self {
             Self::Default => theme.foreground,
-            Self::Primary | Self::Secondary | Self::Destructive => {
-                hsla(0.0, 0.0, 1.0, 1.0) // white
-            }
+            Self::Primary => theme.primary_foreground,
+            Self::Secondary => theme.secondary_foreground,
+            Self::Destructive => theme.danger_foreground,
             Self::Ghost | Self::Outline => theme.foreground,
         }
     }
@@ -68,26 +68,12 @@ impl Semantic {
 
         match self {
             Self::Default => theme.background,
-            Self::Primary => {
-                let color = theme.primary;
-                Self::adjust_brightness(color, 0.9)
-            }
-            Self::Secondary => {
-                let color = theme.secondary;
-                Self::adjust_brightness(color, 0.9)
-            }
-            Self::Destructive => {
-                let color = theme.muted;
-                Self::adjust_brightness(color, 0.9)
-            }
+            Self::Primary => theme.primary_hover,
+            Self::Secondary => theme.secondary_hover,
+            Self::Destructive => theme.danger_hover,
             Self::Ghost => theme.muted,
             Self::Outline => theme.muted,
         }
-    }
-
-    /// Adjusts the brightness of a color by a factor.
-    fn adjust_brightness(color: Hsla, factor: f32) -> Hsla {
-        hsla(color.h, color.s, color.l * factor, color.a)
     }
 
     /// Returns whether this variant should have a border by default.

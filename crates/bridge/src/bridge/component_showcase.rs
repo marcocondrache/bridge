@@ -79,13 +79,7 @@ impl ComponentShowcase {
                 None => div().child("No preview available").into_any_element(),
             };
 
-            div()
-                .v_flex()
-                .size_full()
-                .flex_1()
-                .px_12()
-                .py_6()
-                .child(child)
+            div().v_flex().w_full().px_12().py_6().child(child)
         } else {
             div()
                 .v_flex()
