@@ -4,6 +4,8 @@ pub mod utils;
 pub mod variants;
 
 pub mod prelude {
+    pub use gpui::prelude::*;
+
     pub use crate::variants::{Layout, Semantic, Size, Spacing};
 
     pub use crate::traits::{
