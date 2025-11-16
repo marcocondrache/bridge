@@ -24,7 +24,35 @@ struct PopoverHandleState<V> {
 impl<V: ManagedView> PopoverHandle<V> {
     pub fn show(&self, window: &mut Window, cx: &mut App) {
         if let Some(state) = self.0.borrow().as_ref() {
-            show_popover(&state.view_builder, &state.view, window, cx);
+            {
+                let Some(new_view) = (state.view_builder)(window, cx) else {
+                    return;
+                };
+
+                let view_clone = state.view.clone();
+                let previous_focus = window.focused(cx);
+
+                window
+                    .subscribe(
+                        &new_view,
+                        cx,
+                        move |entity, _: &DismissEvent, window, cx| {
+                            if entity.focus_handle(cx).contains_focused(window, cx)
+                                && let Some(previous_focus) = previous_focus.as_ref()
+                            {
+                                window.focus(previous_focus);
+                            }
+
+                            *view_clone.borrow_mut() = None;
+                            window.refresh();
+                        },
+                    )
+                    .detach();
+
+                window.focus(&new_view.focus_handle(cx));
+                *state.view.borrow_mut() = Some(new_view);
+                window.refresh();
+            };
         }
     }
 
@@ -88,39 +116,4 @@ impl<V: ManagedView> PopoverHandle<V> {
     ) {
         *self.0.borrow_mut() = Some(PopoverHandleState { view_builder, view });
     }
-}
-
-fn show_popover<V: ManagedView>(
-    builder: &Rc<dyn Fn(&mut Window, &mut App) -> Option<Entity<V>>>,
-    view: &Rc<RefCell<Option<Entity<V>>>>,
-    window: &mut Window,
-    cx: &mut App,
-) {
-    let Some(new_view) = (builder)(window, cx) else {
-        return;
-    };
-
-    let view_clone = view.clone();
-    let previous_focus = window.focused(cx);
-
-    window
-        .subscribe(
-            &new_view,
-            cx,
-            move |entity, _: &DismissEvent, window, cx| {
-                if entity.focus_handle(cx).contains_focused(window, cx)
-                    && let Some(previous_focus) = previous_focus.as_ref()
-                {
-                    window.focus(previous_focus);
-                }
-
-                *view_clone.borrow_mut() = None;
-                window.refresh();
-            },
-        )
-        .detach();
-
-    window.focus(&new_view.focus_handle(cx));
-    *view.borrow_mut() = Some(new_view);
-    window.refresh();
 }
