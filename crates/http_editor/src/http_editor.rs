@@ -28,7 +28,7 @@ use http::Request;
 use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
 use ui::{
     components::{button::Button, input::Input, table::TableKV},
-    traits::clickable::Clickable,
+    traits::{SemanticColor, Sizable, clickable::Clickable},
 };
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
@@ -131,7 +131,7 @@ impl HttpEditor {
         let method_selector = cx.new(|cx| method_selector(window, cx));
 
         let body = cx.new(|cx| BodyTab::new(window, cx));
-        let target_uri = cx.new(|cx| Input::new(cx).placeholder("Enter URL"));
+        let target_uri = cx.new(|cx| Input::new(cx).placeholder("Enter URL").large());
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
         let query_table = cx.new(|cx| TableKV::new(cx));
         let headers_table = cx.new(|cx| headers_table_editor(window, cx));
@@ -287,9 +287,6 @@ impl HttpEditor {
 
     fn render_request_bar(&self, cx: &Context<Self>) -> impl IntoElement {
         h_flex()
-            .border_1()
-            .border_color(cx.theme().input)
-            .rounded(cx.theme().radius)
             .w_full()
             .gap_1()
             .child(
@@ -305,11 +302,11 @@ impl HttpEditor {
             .child(div().flex_1().child(self.url_input.clone()))
             .child(
                 Button::new("execute")
-                    // .ml_2()
+                    .large()
                     .when_else(
                         self.is_executing(),
-                        |this| this.label("Cancel"),
-                        |this| this.label("Send"),
+                        |this| this.label("Cancel").secondary(),
+                        |this| this.label("Send").primary(),
                     )
                     .on_click(cx.listener(move |this, _, window, cx| {
                         this.handle_request(window, cx);
