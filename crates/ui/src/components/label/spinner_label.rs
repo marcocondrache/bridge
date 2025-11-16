@@ -6,8 +6,8 @@ use ui_macros::RegisterComponent;
 
 use crate::{components::label::Label, traits::Sizable};
 
-const FRAMES: [&'static str; 8] = ["◐", "◓", "◑", "◒", "◐", "◓", "◑", "◒"];
-const DURATION: Duration = Duration::from_millis(600);
+const FRAMES: [&'static str; 6] = ["·", "∴", "⋮", "⁙", "⁛", "※"];
+const DURATION: Duration = Duration::from_millis(1200);
 
 #[derive(IntoElement, RegisterComponent)]
 pub struct SpinnerLabel {
