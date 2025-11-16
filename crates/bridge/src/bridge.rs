@@ -8,6 +8,7 @@ use gpui::{
     App, AppContext, Context, TitlebarOptions, Window, WindowKind, WindowOptions, point, px,
 };
 
+use http_editor::HttpEditor;
 use ui::utils::placement::Placement;
 use uuid::Uuid;
 
@@ -25,8 +26,10 @@ pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
         };
 
         let component = cx.new(|cx| ComponentShowcase::new(cx));
+        let editor = cx.new(|cx| HttpEditor::new(window, cx));
 
         workspace.add_item(Box::new(component), window, cx);
+        workspace.add_item(Box::new(editor), window, cx);
 
         initialize_panels(window, cx);
     })

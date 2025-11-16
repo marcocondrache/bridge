@@ -105,11 +105,19 @@ impl Render for Area {
             .size_full()
             .flex_none()
             .overflow_hidden()
-            .child(TabBar::new("Items").children(self.items.iter().map(|item| {
-                Tab::new(item.tab_title(cx))
-                    .child(item.tab_title(cx))
-                    .large()
-            })))
+            .child(
+                TabBar::new("Items").children(self.items.iter().enumerate().map(
+                    |(index, item)| {
+                        Tab::new(item.tab_title(cx))
+                            .selected(index == self.current)
+                            .on_click(cx.listener(move |this, _, window, cx| {
+                                this.activate_item(index, window, cx);
+                            }))
+                            .child(item.tab_title(cx))
+                            .large()
+                    },
+                )),
+            )
             .child({
                 div().flex().relative().overflow_hidden().map(|this| {
                     if let Some(item) = self.active_item() {
