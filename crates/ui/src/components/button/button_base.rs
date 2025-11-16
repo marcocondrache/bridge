@@ -16,6 +16,7 @@ pub(crate) struct ButtonBase {
     pub(crate) layout: Layout,
     pub(crate) semantic: Semantic,
     disabled: bool,
+    active: bool,
     cursor_style: CursorStyle,
     on_click: Option<Box<dyn Fn(&ClickEvent, &mut Window, &mut App) + 'static>>,
     children: SmallVec<[AnyElement; 1]>,
@@ -31,6 +32,7 @@ impl ButtonBase {
             semantic: Semantic::default(),
             layout: Layout::default(),
             disabled: false,
+            active: false,
             on_click: None,
             children: SmallVec::new(),
             cursor_style: CursorStyle::PointingHand,
@@ -69,6 +71,7 @@ impl RenderOnce for ButtonBase {
                 this.border_1().border_color(color)
             })
             .when(self.layout == Layout::Block, |this| this.w_full())
+            .when(self.active, |this| this.bg(hover_bg))
             .when_else(
                 self.disabled,
                 |this| this.opacity(0.5).cursor(CursorStyle::OperationNotAllowed),

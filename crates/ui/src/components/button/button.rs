@@ -12,6 +12,7 @@ use crate::components::{
     button::ButtonBase,
     label::{Label, SpinnerLabel},
 };
+use crate::traits::Toggleable;
 
 #[derive(IntoElement, RegisterComponent)]
 pub struct Button {
@@ -56,6 +57,12 @@ impl RenderOnce for Button {
 impl Disableable for Button {
     fn disabled(mut self, disabled: bool) -> Self {
         self.base = self.base.disabled(disabled);
+        self
+    }
+}
+
+impl Toggleable for Button {
+    fn toggle_state(self, _selected: bool) -> Self {
         self
     }
 }

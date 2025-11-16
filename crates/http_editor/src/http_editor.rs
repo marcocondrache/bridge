@@ -14,7 +14,7 @@ use gpui::{
     ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, IconName, StyledExt,
+    IconName, StyledExt,
     button::Button as OldButton,
     divider::Divider,
     h_flex,
