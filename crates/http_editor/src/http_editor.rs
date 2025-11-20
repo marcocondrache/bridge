@@ -26,8 +26,9 @@ use gpui_component::{
 };
 use http::Request;
 use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
+use pair_editor::PairEditor;
 use ui::{
-    components::{button::Button, input::Input, table::TableKV},
+    components::{button::Button, input::Input},
     traits::{SemanticColor, Sizable, clickable::Clickable},
 };
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
@@ -117,7 +118,7 @@ pub struct HttpEditor {
     method_selector: Entity<MethodSelector>,
     response_viewer: Option<Entity<ResponsePanel>>,
     executing_task: Option<Task<Result<()>>>,
-    query_table: Entity<TableKV>,
+    query_editor: Entity<PairEditor>,
     headers_table: Entity<HeadersTableEditor>,
     authorization_tab: Entity<AuthorizationTab>,
     selected_tab: HttpEditorTab,
@@ -133,7 +134,7 @@ impl HttpEditor {
         let body = cx.new(|cx| BodyTab::new(window, cx));
         let target_uri = cx.new(|cx| Input::new(cx).placeholder("Enter URL").large());
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
-        let query_table = cx.new(|cx| TableKV::new(cx));
+        let query_table = cx.new(|cx| PairEditor::new(window, cx).auto_create(true));
         let headers_table = cx.new(|cx| headers_table_editor(window, cx));
 
         Self {
@@ -141,7 +142,7 @@ impl HttpEditor {
             url_input: target_uri,
             method_selector,
             body_tab: body,
-            query_table,
+            query_editor: query_table,
             headers_table,
             authorization_tab,
             focus_handle: cx.focus_handle(),
@@ -252,7 +253,7 @@ impl HttpEditor {
     }
 
     fn render_query_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
-        self.query_table.clone()
+        self.query_editor.clone()
     }
 
     fn render_headers_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {

@@ -2765,6 +2765,7 @@ dependencies = [
  "http_client",
  "humantime",
  "indexmap",
+ "pair_editor",
  "regex",
  "serde",
  "smallvec",
@@ -4160,6 +4161,16 @@ checksum = "9aa2b01e1d916879f73a53d01d1d6cee68adbb31d6d9177a8cfce093cced1d50"
 dependencies = [
  "futures-core",
  "pin-project-lite",
+]
+
+[[package]]
+name = "pair_editor"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "gpui-component",
+ "strum 0.27.2",
+ "ui",
 ]
 
 [[package]]

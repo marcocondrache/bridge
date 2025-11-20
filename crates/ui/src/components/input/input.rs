@@ -269,7 +269,7 @@ impl Focusable for Input {
 impl Render for Input {
     fn render(
         &mut self,
-        window: &mut gpui::Window,
+        _window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl IntoElement {
         let theme = cx.theme();

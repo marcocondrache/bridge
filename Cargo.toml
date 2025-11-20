@@ -17,6 +17,7 @@ util = { path = "crates/util" }
 workspace = { path = "crates/workspace" }
 collection = { path = "crates/collection" }
 settings = { path = "crates/settings" }
+pair_editor = { path = "crates/pair_editor" }
 http_editor = { path = "crates/http_editor" }
 http_client = { path = "crates/http_client" }
 title_bar = { path = "crates/title_bar" }

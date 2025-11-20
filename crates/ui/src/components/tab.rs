@@ -98,6 +98,8 @@ impl RenderOnce for Tab {
             .px(padding_x)
             .py(padding_y)
             .text_size(font_size)
+            .border_r_1()
+            .border_color(theme.border)
             .map(|this| match self.selected {
                 true => this
                     .text_color(theme.tab_active_foreground)
@@ -110,11 +112,11 @@ impl RenderOnce for Tab {
                     this.opacity(0.4)
                         .cursor(gpui::CursorStyle::OperationNotAllowed)
                 },
-                |this| {
-                    this.cursor(gpui::CursorStyle::PointingHand)
-                        .hover(|style| style.bg(theme.secondary_hover))
-                },
+                |this| this.cursor(gpui::CursorStyle::PointingHand),
             )
+            .when(!self.selected && !self.disabled, |this| {
+                this.hover(|style| style.bg(theme.secondary_hover))
+            })
             .when_some(self.start_slot, |this, slot| this.child(slot))
             .children(self.children)
             .when_some(self.end_slot, |this, slot| this.child(slot))
