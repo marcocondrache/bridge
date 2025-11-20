@@ -14,22 +14,22 @@ use gpui::{
     ParentElement, Render, Styled, Task, Window, div, prelude::FluentBuilder, px,
 };
 use gpui_component::{
-    ActiveTheme, IconName, StyledExt,
-    button::{Button as OldButton, ButtonVariants},
+    IconName, StyledExt,
+    button::Button as OldButton,
     divider::Divider,
     h_flex,
-    input::{Input, InputState},
     label::Label,
     select::Select,
-    tab::{self, Tab, TabBar},
-    table::{Table, TableState},
+    tab::{Tab, TabBar},
+    table::Table,
     v_flex,
 };
 use http::Request;
 use http_client::{AsyncReadResponseExt, HttpClient, config::Configurable};
+use pair_editor::PairEditor;
 use ui::{
-    components::{button::Button, label::SpinnerLabel},
-    traits::clickable::Clickable,
+    components::{button::Button, input::Input},
+    traits::{SemanticColor, Sizable, clickable::Clickable},
 };
 use workspace::{AppState, NewHttpEditor, Workspace, area::Item};
 
@@ -38,21 +38,20 @@ use crate::{
     body_tab::BodyTab,
     headers_table::{HeadersTableEditor, headers_table_editor},
     method_selector::{MethodSelector, method_selector},
-    query_table::QueryTableDelegate,
     response_panel::ResponsePanel,
 };
 
 pub fn init(cx: &mut App) {
-    cx.observe_new(|workspace: &mut Workspace, window, cx| {
-        // workspace.register_action(|workspace, _: &NewHttpEditor, window, cx| {
-        //     println!("Action called");
+    // cx.observe_new(|workspace: &mut Workspace, window, cx| {
+    //     // workspace.register_action(|workspace, _: &NewHttpEditor, window, cx| {
+    //     //     println!("Action called");
 
-        //     HttpEditor::new_in_workspace(workspace, window, cx);
-        // });
+    //     //     HttpEditor::new_in_workspace(workspace, window, cx);
+    //     // });
 
-        HttpEditor::new_in_workspace(workspace, window.unwrap(), cx);
-    })
-    .detach();
+    //     HttpEditor::new_in_workspace(workspace, window.unwrap(), cx);
+    // })
+    // .detach();
 
     cx.on_action(|&NewHttpEditor, cx| {
         if let Some(app_state) = AppState::global(cx).upgrade() {
@@ -105,21 +104,21 @@ impl TryFrom<usize> for HttpEditorTab {
 impl From<HttpEditorTab> for Tab {
     fn from(value: HttpEditorTab) -> Self {
         match value {
-            HttpEditorTab::Body => Tab::new("Body"),
-            HttpEditorTab::Headers => Tab::new("Headers"),
-            HttpEditorTab::Query => Tab::new("Query"),
-            HttpEditorTab::Authorization => Tab::new("Authorization"),
+            HttpEditorTab::Body => Tab::new().label("Body"),
+            HttpEditorTab::Headers => Tab::new().label("Headers"),
+            HttpEditorTab::Query => Tab::new().label("Query"),
+            HttpEditorTab::Authorization => Tab::new().label("Authorization"),
         }
     }
 }
 
 pub struct HttpEditor {
     body_tab: Entity<BodyTab>,
-    url_input: Entity<InputState>,
+    url_input: Entity<Input>,
     method_selector: Entity<MethodSelector>,
     response_viewer: Option<Entity<ResponsePanel>>,
     executing_task: Option<Task<Result<()>>>,
-    query_table: Entity<TableState<QueryTableDelegate>>,
+    query_editor: Entity<PairEditor>,
     headers_table: Entity<HeadersTableEditor>,
     authorization_tab: Entity<AuthorizationTab>,
     selected_tab: HttpEditorTab,
@@ -133,9 +132,9 @@ impl HttpEditor {
         let method_selector = cx.new(|cx| method_selector(window, cx));
 
         let body = cx.new(|cx| BodyTab::new(window, cx));
-        let target_uri = cx.new(|cx| InputState::new(window, cx).placeholder("Enter URL"));
+        let target_uri = cx.new(|cx| Input::new(cx).placeholder("Enter URL").large());
         let authorization_tab = cx.new(|cx| AuthorizationTab::new(this, window, cx));
-        let query_table = cx.new(|cx| TableState::new(QueryTableDelegate::new(), window, cx));
+        let query_table = cx.new(|cx| PairEditor::new(window, cx).auto_create(true));
         let headers_table = cx.new(|cx| headers_table_editor(window, cx));
 
         Self {
@@ -143,7 +142,7 @@ impl HttpEditor {
             url_input: target_uri,
             method_selector,
             body_tab: body,
-            query_table,
+            query_editor: query_table,
             headers_table,
             authorization_tab,
             focus_handle: cx.focus_handle(),
@@ -193,7 +192,7 @@ impl HttpEditor {
         let method = self.method_selector.read(cx).selected_value().unwrap();
         let uri = self
             .url_input
-            .read_with(cx, |this, _cx| this.value())
+            .read_with(cx, |this, _cx| this.get_content())
             .to_string();
 
         let mut builder = Request::builder().method(method).uri(uri);
@@ -254,7 +253,7 @@ impl HttpEditor {
     }
 
     fn render_query_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
-        Table::new(&self.query_table)
+        self.query_editor.clone()
     }
 
     fn render_headers_tab(&self, window: &mut Window, cx: &Context<Self>) -> impl IntoElement {
@@ -289,9 +288,6 @@ impl HttpEditor {
 
     fn render_request_bar(&self, cx: &Context<Self>) -> impl IntoElement {
         h_flex()
-            .border_1()
-            .border_color(cx.theme().input)
-            .rounded(cx.theme().radius)
             .w_full()
             .gap_1()
             .child(
@@ -304,18 +300,14 @@ impl HttpEditor {
                 ),
             )
             .child(Divider::vertical())
-            .child(
-                div()
-                    .flex_1()
-                    .child(Input::new(&self.url_input).appearance(false).pr_3().py_2()),
-            )
+            .child(div().flex_1().child(self.url_input.clone()))
             .child(
                 Button::new("execute")
-                    // .ml_2()
+                    .large()
                     .when_else(
                         self.is_executing(),
-                        |this| this.label("Cancel"),
-                        |this| this.label("Send"),
+                        |this| this.label("Cancel").secondary(),
+                        |this| this.label("Send").primary(),
                     )
                     .on_click(cx.listener(move |this, _, window, cx| {
                         this.handle_request(window, cx);

@@ -1,0 +1,13 @@
+[package]
+name = "ui_macros"
+version = "0.1.0"
+publish.workspace = true
+edition.workspace = true
+
+[lib]
+path = "src/ui_macros.rs"
+proc-macro = true
+
+[dependencies]
+quote.workspace = true
+syn.workspace = true

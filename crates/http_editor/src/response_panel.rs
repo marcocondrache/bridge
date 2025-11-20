@@ -49,8 +49,8 @@ impl TryFrom<usize> for ResponseTab {
 impl From<ResponseTab> for Tab {
     fn from(value: ResponseTab) -> Self {
         match value {
-            ResponseTab::Body => Tab::new("Body"),
-            ResponseTab::Headers => Tab::new("Headers"),
+            ResponseTab::Body => Tab::new().label("Body"),
+            ResponseTab::Headers => Tab::new().label("Headers"),
         }
     }
 }

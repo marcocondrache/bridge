@@ -17,11 +17,14 @@ util = { path = "crates/util" }
 workspace = { path = "crates/workspace" }
 collection = { path = "crates/collection" }
 settings = { path = "crates/settings" }
+pair_editor = { path = "crates/pair_editor" }
 http_editor = { path = "crates/http_editor" }
 http_client = { path = "crates/http_client" }
 title_bar = { path = "crates/title_bar" }
 assets = { path = "crates/assets" }
 ui = { path = "crates/ui" }
+ui_component = { path = "crates/ui_component" }
+ui_macros = { path = "crates/ui_macros" }
 
 #
 # External crates
@@ -54,6 +57,10 @@ encoding_rs = "0.8.35"
 unicode-segmentation = "1.12.0"
 mime = "0.3.17"
 strum = "0.27.2"
+ropey = "1.6.1"
+quote = "1.0.42"
+syn = "2.0.110"
+inventory = "0.3.21"
 derive_more = { version = "2.0.1", features = ["full"] }
 smallvec = "1.15.1"
 config = { version = "0.15.18", default-features = false, features = ["async", "json5", "convert-case"] }
@@ -62,4 +69,4 @@ serde_json = "1.0.145"
 
 gpui = { version = "*", features = ["runtime_shaders"] }
 gpui-macros = { version = "*" }
-gpui-component = { version = "0.4.0-preview1" }
+gpui-component = { version = "0.4.0" }

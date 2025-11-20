@@ -1,4 +1,5 @@
 mod app_menus;
+mod component_showcase;
 
 use std::sync::Arc;
 
@@ -7,11 +8,14 @@ use gpui::{
     App, AppContext, Context, TitlebarOptions, Window, WindowKind, WindowOptions, point, px,
 };
 
+use http_editor::HttpEditor;
 use ui::utils::placement::Placement;
 use uuid::Uuid;
 
 pub use app_menus::*;
 use workspace::{AppState, Workspace};
+
+use crate::bridge::component_showcase::ComponentShowcase;
 
 pub fn init(cx: &mut App) {}
 
@@ -20,6 +24,12 @@ pub fn initialize_workspace(state: Arc<AppState>, cx: &mut App) {
         let Some(window) = window else {
             return;
         };
+
+        let component = cx.new(|cx| ComponentShowcase::new(cx));
+        let editor = cx.new(|cx| HttpEditor::new(window, cx));
+
+        workspace.add_item(Box::new(component), window, cx);
+        workspace.add_item(Box::new(editor), window, cx);
 
         initialize_panels(window, cx);
     })

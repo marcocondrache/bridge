@@ -1,14 +1,10 @@
 use gpui::{
-    AnyView, App, AppContext, Context, Entity, EntityId, FocusHandle, Focusable,
-    InteractiveElement, ParentElement, Render, SharedString, Styled, WeakEntity, Window, div,
-    prelude::FluentBuilder,
+    AnyView, App, Entity, EntityId, FocusHandle, Focusable, SharedString, WeakEntity, Window, div,
 };
-use gpui_component::{
-    ActiveTheme, Sizable, StyledExt,
-    button::Button,
-    h_flex,
-    tab::{Tab, TabBar},
-    v_flex,
+use gpui_component::ActiveTheme;
+use ui::{
+    components::{button::Button, tab::Tab, tab_bar::TabBar},
+    prelude::*,
 };
 
 use crate::{NewHttpEditor, Workspace};
@@ -102,17 +98,25 @@ impl Render for Area {
     ) -> impl gpui::IntoElement {
         let theme = cx.theme();
 
-        v_flex()
+        div()
+            .v_flex()
             .id("area")
             .key_context("area")
             .size_full()
             .flex_none()
             .overflow_hidden()
             .child(
-                TabBar::new("Items")
-                    .large()
-                    .selected_index(self.active_item_index())
-                    .children(self.items.iter().map(|item| Tab::new(item.tab_title(cx)))),
+                TabBar::new("Items").children(self.items.iter().enumerate().map(
+                    |(index, item)| {
+                        Tab::new(item.tab_title(cx))
+                            .selected(index == self.current)
+                            .on_click(cx.listener(move |this, _, window, cx| {
+                                this.activate_item(index, window, cx);
+                            }))
+                            .child(item.tab_title(cx))
+                            .large()
+                    },
+                )),
             )
             .child({
                 div().flex().relative().overflow_hidden().map(|this| {
@@ -125,7 +129,7 @@ impl Render for Area {
                             .justify_center()
                             .text_color(theme.secondary_foreground)
                             .child("Create a new HTTP request")
-                            .child(Button::new("test").on_click(|_, window, cx| {
+                            .child(Button::new("test").label("Send").on_click(|_, window, cx| {
                                 window.dispatch_action(Box::new(NewHttpEditor), cx);
                             }))
                     }
