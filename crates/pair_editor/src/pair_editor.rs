@@ -1,7 +1,7 @@
 use gpui::{
-    App, Context, CursorStyle, Entity, FocusHandle, Focusable, InteractiveElement, IntoElement,
-    MouseButton, MouseDownEvent, ParentElement, Render, SharedString, Styled, Subscription, Window,
-    actions, div, prelude::FluentBuilder, px, rems,
+    AbsoluteLength, App, Context, CursorStyle, DefiniteLength, Entity, FocusHandle, Focusable,
+    InteractiveElement, IntoElement, MouseButton, MouseDownEvent, ParentElement, Render,
+    SharedString, Styled, Subscription, Window, actions, div, prelude::FluentBuilder, px, rems,
 };
 use gpui_component::ActiveTheme;
 use strum::{Display, IntoStaticStr};
@@ -392,6 +392,12 @@ impl Render for PairEditor {
         div().track_focus(&self.focus_handle).size_full().child(
             Table::<4>::new()
                 .header(PairCell::all().map(|c| c.to_string()))
+                .column_widths([
+                    DefiniteLength::Absolute(AbsoluteLength::Pixels(px(48.))),
+                    DefiniteLength::Fraction(0.50),
+                    DefiniteLength::Fraction(0.50),
+                    DefiniteLength::Absolute(AbsoluteLength::Pixels(px(48.))),
+                ])
                 .rows(rows),
         )
     }

@@ -104,10 +104,10 @@ impl TryFrom<usize> for HttpEditorTab {
 impl From<HttpEditorTab> for Tab {
     fn from(value: HttpEditorTab) -> Self {
         match value {
-            HttpEditorTab::Body => Tab::new("Body"),
-            HttpEditorTab::Headers => Tab::new("Headers"),
-            HttpEditorTab::Query => Tab::new("Query"),
-            HttpEditorTab::Authorization => Tab::new("Authorization"),
+            HttpEditorTab::Body => Tab::new().label("Body"),
+            HttpEditorTab::Headers => Tab::new().label("Headers"),
+            HttpEditorTab::Query => Tab::new().label("Query"),
+            HttpEditorTab::Authorization => Tab::new().label("Authorization"),
         }
     }
 }

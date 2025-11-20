@@ -195,7 +195,7 @@ impl Workspace {
                 move |window, cx| {
                     let workspace = cx.new(|cx| Workspace::new(window, cx));
 
-                    cx.new(|cx| Root::new(workspace.into(), window, cx))
+                    cx.new(|cx| Root::new(workspace, window, cx))
                 }
             })?;
 
@@ -246,7 +246,7 @@ impl Render for Workspace {
         window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
-        let modal_layer = Root::render_modal_layer(window, cx);
+        let modal_layer = Root::render_dialog_layer(window, cx);
         let notification_layer = Root::render_notification_layer(window, cx);
 
         self.actions(div(), window, cx)
