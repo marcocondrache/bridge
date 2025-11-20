@@ -6,8 +6,9 @@ use gpui::{
 use gpui_component::ActiveTheme;
 use strum::{Display, IntoStaticStr};
 use ui::{
-    components::{button::Button, input::Input, table::Table},
+    components::{button::Button, checkbox::Checkbox, input::Input, table::Table},
     prelude::*,
+    traits::Toggleable,
 };
 
 actions!(pair_editor, [AddPair, DeletePair]);
@@ -110,26 +111,29 @@ impl Pair {
 pub struct PairEditor {
     pairs: Vec<Pair>,
     auto_create: bool,
+    input: Entity<Input>,
     active_cell: Option<(usize, PairItem)>,
-    active_input: Option<Entity<Input>>,
     focus_handle: FocusHandle,
-    _subscription: Subscription,
+    _focus_subscription: Subscription,
 }
 
 impl PairEditor {
     pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+        let input = cx.new(|cx| Input::new(cx).large());
+
         let focus_handle = cx.focus_handle();
-        let subscription = cx.on_focus_out(&focus_handle, window, |this, _, _window, cx| {
-            this.blur_item(cx);
-        });
+        let focus_subscription =
+            cx.on_focus_out(&input.focus_handle(cx), window, |this, _, _window, cx| {
+                this.blur_item(cx);
+            });
 
         Self {
             pairs: vec![Pair::new()],
             auto_create: true,
             active_cell: None,
-            active_input: None,
+            input,
             focus_handle,
-            _subscription: subscription,
+            _focus_subscription: focus_subscription,
         }
     }
 
@@ -169,28 +173,20 @@ impl PairEditor {
         self.save_active_input(cx);
 
         let content = self.pairs[index].get_item(item).to_string();
-        let input = cx.new(|cx| {
-            Input::new(cx)
-                .content(&content)
-                .placeholder(item.to_string())
-                .large()
-        });
 
-        self.active_input = Some(input.clone());
+        self.input.update(cx, |this, _| this.set_content(&content));
         self.active_cell = Some((index, item));
 
-        window.focus(&input.read(cx).focus_handle(cx));
+        window.focus(&self.input.focus_handle(cx));
 
         cx.notify();
     }
 
     fn save_active_input(&mut self, cx: &mut Context<Self>) {
         if let Some((index, item)) = self.active_cell {
-            if let Some(input) = &self.active_input {
-                if index < self.pairs.len() {
-                    let content = input.read(cx).get_content();
-                    self.pairs[index].set_item(item, content);
-                }
+            if index < self.pairs.len() {
+                let content = self.input.read(cx).get_content();
+                self.pairs[index].set_item(item, content);
             }
         }
     }
@@ -199,7 +195,6 @@ impl PairEditor {
         self.save_active_input(cx);
         self.check_auto_create();
 
-        self.active_input = None;
         self.active_cell = None;
 
         cx.notify();
@@ -255,50 +250,22 @@ impl PairEditor {
     ) -> impl IntoElement {
         let theme = cx.theme();
         let pair = &self.pairs[index];
+
         let id: (&'static str, usize) = (cell.into(), index);
 
         match cell {
             PairCell::Toggle => {
-                let enabled = pair.enabled;
-                div().id(id).flex().items_center().justify_center().child(
-                    div()
-                        .w(rems(1.0))
-                        .h(rems(1.0))
-                        .border_1()
-                        .border_color(if enabled { theme.primary } else { theme.border })
-                        .bg(if enabled {
-                            theme.primary
-                        } else {
-                            theme.background
-                        })
-                        .rounded(px(3.))
-                        .flex()
-                        .items_center()
-                        .justify_center()
-                        .cursor(CursorStyle::PointingHand)
-                        .hover(|this| {
-                            this.bg(if enabled {
-                                theme.primary.opacity(0.8)
-                            } else {
-                                theme.muted
-                            })
-                        })
-                        .on_mouse_down(
-                            MouseButton::Left,
-                            cx.listener(move |this, _event: &MouseDownEvent, _window, cx| {
-                                this.toggle_enabled(index, cx);
-                            }),
-                        )
-                        .when(enabled, |this| {
-                            this.child(
-                                div()
-                                    .w(px(6.))
-                                    .h(px(6.))
-                                    .bg(theme.background)
-                                    .rounded(px(1.)),
-                            )
+                div()
+                    .id(id)
+                    .size_full()
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .child(Checkbox::new("toggle").toggle_state(pair.enabled).on_click(
+                        cx.listener(move |this, _, _window, cx| {
+                            this.toggle_enabled(index, cx);
                         }),
-                )
+                    ))
             }
             PairCell::Remove => div().id(id).flex().items_center().justify_center().child(
                 Button::new(id)
@@ -312,17 +279,11 @@ impl PairEditor {
                 let is_active = self.active_cell == Some((index, item));
 
                 if is_active {
-                    div()
-                        .id(id)
-                        .w_full()
-                        .h_full()
-                        .px_1()
-                        .when_some(self.active_input.clone(), |this, input| this.child(input))
+                    div().id(id).size_full().px_1().child(self.input.clone())
                 } else {
                     div()
                         .id(id)
-                        .w_full()
-                        .h_full()
+                        .size_full()
                         .min_h(rems(2.0))
                         .border_1()
                         .border_color(theme.border)
@@ -361,10 +322,7 @@ impl PairEditor {
 
 impl Focusable for PairEditor {
     fn focus_handle(&self, cx: &App) -> FocusHandle {
-        self.active_input.as_ref().map_or_else(
-            || self.focus_handle.clone(),
-            |input| input.read(cx).focus_handle(cx),
-        )
+        self.focus_handle.clone()
     }
 }
 
@@ -389,16 +347,20 @@ impl Render for PairEditor {
             })
             .collect::<Vec<_>>();
 
-        div().track_focus(&self.focus_handle).size_full().child(
-            Table::<4>::new()
-                .header(PairCell::all().map(|c| c.to_string()))
-                .column_widths([
-                    DefiniteLength::Absolute(AbsoluteLength::Pixels(px(48.))),
-                    DefiniteLength::Fraction(0.50),
-                    DefiniteLength::Fraction(0.50),
-                    DefiniteLength::Absolute(AbsoluteLength::Pixels(px(48.))),
-                ])
-                .rows(rows),
-        )
+        div()
+            .id("pair-editor")
+            .track_focus(&self.focus_handle)
+            .size_full()
+            .child(
+                Table::<4>::new()
+                    .header(["", "Key", "Value", ""])
+                    .column_widths([
+                        DefiniteLength::Absolute(AbsoluteLength::Pixels(px(48.))),
+                        DefiniteLength::Fraction(0.50),
+                        DefiniteLength::Fraction(0.50),
+                        DefiniteLength::Absolute(AbsoluteLength::Pixels(px(48.))),
+                    ])
+                    .rows(rows),
+            )
     }
 }

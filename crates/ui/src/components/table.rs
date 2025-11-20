@@ -150,7 +150,6 @@ impl<const COLS: usize> Table<COLS> {
 
     fn base_cell(width: Option<Length>) -> Div {
         div()
-            .px_1p5()
             .when_none(&width, |this| this.flex_1())
             .when_some(width, |this, width| this.w(width))
             .whitespace_nowrap()

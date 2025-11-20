@@ -95,13 +95,21 @@ impl Input {
     }
 
     pub fn placeholder(mut self, placeholder: impl Into<SharedString>) -> Self {
-        self.placeholder = Some(placeholder.into());
+        self.set_placeholder(placeholder);
         self
     }
 
+    pub fn set_placeholder(&mut self, placeholder: impl Into<SharedString>) {
+        self.placeholder = Some(placeholder.into());
+    }
+
     pub fn content(mut self, content: &str) -> Self {
-        self.buffer = InputBuffer::single_line(content);
+        self.set_content(content);
         self
+    }
+
+    pub fn set_content(&mut self, content: &str) {
+        self.buffer = InputBuffer::single_line(content);
     }
 
     pub fn get_content(&self) -> String {
