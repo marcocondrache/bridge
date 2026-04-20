@@ -6,5 +6,8 @@
 {
   languages.rust.enable = true;
 
-  packages = [ pkgs.cargo-machete ];
+  packages = [
+    pkgs.cargo-machete
+    pkgs.cargo-tauri
+  ];
 }
