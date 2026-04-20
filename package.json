@@ -20,6 +20,7 @@
     "@uiw/react-codemirror": "^4.25.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "shadcn": "^4.3.1",
