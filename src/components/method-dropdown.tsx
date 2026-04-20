@@ -27,7 +27,7 @@ export function MethodDropdown({ method, onChange }: MethodDropdownProps) {
 						variant="outline"
 						size="sm"
 						className={cn(
-							"min-w-[62px] gap-1 font-semibold tracking-[0.05em]",
+							"min-w-16 gap-1 font-semibold tracking-wide",
 							METHOD_COLORS[method],
 							METHOD_BG_COLORS[method],
 							"border-current/25",
@@ -52,7 +52,7 @@ export function MethodDropdown({ method, onChange }: MethodDropdownProps) {
 						key={m}
 						onClick={() => onChange(m)}
 						className={cn(
-							"font-semibold tracking-[0.04em]",
+							"font-semibold tracking-tight",
 							METHOD_COLORS[m],
 							m === method && "bg-muted",
 						)}

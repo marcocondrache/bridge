@@ -9,7 +9,7 @@ export function RequestPanel() {
 			className="flex min-w-0 flex-1 flex-col overflow-hidden"
 		>
 			<div className="flex shrink-0 items-center border-b bg-accent pl-2.5">
-				<span className="mr-2.5 text-[9px] tracking-[0.12em] text-muted-foreground">
+				<span className="mr-2.5 text-[0.6rem] tracking-widest text-muted-foreground">
 					REQUEST
 				</span>
 				<TabsList variant="line">
@@ -27,12 +27,12 @@ export function RequestPanel() {
 					<KVTable rows={REQ_HEADERS} />
 				</TabsContent>
 				<TabsContent value="body">
-					<div className="p-4 text-center text-[10px] text-muted-foreground">
+					<div className="p-4 text-center text-xs text-muted-foreground">
 						No body
 					</div>
 				</TabsContent>
 				<TabsContent value="auth">
-					<div className="p-4 text-center text-[10px] text-muted-foreground">
+					<div className="p-4 text-center text-xs text-muted-foreground">
 						No auth configured
 					</div>
 				</TabsContent>

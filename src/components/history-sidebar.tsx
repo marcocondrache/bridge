@@ -18,12 +18,12 @@ export function HistorySidebar({
 	onSelect,
 }: HistorySidebarProps) {
 	return (
-		<aside className="flex w-[210px] shrink-0 flex-col overflow-hidden border-r bg-accent">
+		<aside className="flex w-52 shrink-0 flex-col overflow-hidden border-r bg-accent">
 			<div className="flex shrink-0 items-center justify-between border-b px-2.5 py-1.5">
-				<span className="text-[9px] tracking-[0.12em] text-muted-foreground">
+				<span className="text-xs tracking-widest text-muted-foreground">
 					HISTORY
 				</span>
-				<span className="text-[9px] text-muted-foreground">{items.length}</span>
+				<span className="text-xs text-muted-foreground">{items.length}</span>
 			</div>
 			<div className="flex-1 overflow-y-auto">
 				{items.map((item, i) => (
@@ -52,6 +52,7 @@ function SidebarRow({
 
 	return (
 		<button
+			type="button"
 			onClick={onClick}
 			className={cn(
 				"w-full border-l-2 px-2.5 py-1.5 text-left transition-colors",
@@ -62,24 +63,20 @@ function SidebarRow({
 		>
 			<div className="mb-0.5 flex items-center gap-1.5">
 				<MethodBadge method={item.method} />
-				<span
-					className={cn("text-[9px] font-semibold", statusColor(item.status))}
-				>
+				<span className={cn("text-xs font-semibold", statusColor(item.status))}>
 					{item.status}
 				</span>
-				<span className="ml-auto text-[9px] text-muted-foreground">
-					{item.ts}
-				</span>
+				<span className="ml-auto text-xs text-muted-foreground">{item.ts}</span>
 			</div>
 			<div
 				className={cn(
-					"truncate text-[10px] leading-snug",
+					"truncate text-xs leading-snug",
 					selected ? "text-foreground" : "text-muted-foreground",
 				)}
 			>
 				{url}
 			</div>
-			<div className="mt-0.5 text-[9px] text-muted-foreground">{item.ms}ms</div>
+			<div className="mt-0.5 text-xs text-muted-foreground">{item.ms}ms</div>
 		</button>
 	);
 }
@@ -88,7 +85,7 @@ export function MethodBadge({ method }: { method: string }) {
 	return (
 		<span
 			className={cn(
-				"inline-block min-w-[46px] shrink-0 rounded-[3px] px-1.5 py-px text-center text-[10px] font-semibold tracking-[0.04em]",
+				"inline-block min-w-11 shrink-0 rounded-sm px-1.5 py-px text-center text-xs font-semibold tracking-tight",
 				METHOD_COLORS[method],
 				METHOD_BG_COLORS[method],
 			)}

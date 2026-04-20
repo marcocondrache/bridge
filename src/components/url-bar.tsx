@@ -32,12 +32,12 @@ export function UrlBar({
 				}}
 				placeholder="https://..."
 				spellCheck={false}
-				className="flex-1 text-xs"
+				className="flex-1 text-sm"
 			/>
 			<Button
 				size="sm"
 				onClick={onSend}
-				className="shrink-0 px-3.5 text-[10px] font-semibold tracking-[0.06em]"
+				className="shrink-0 px-3.5 text-xs font-semibold tracking-wide"
 			>
 				SEND
 			</Button>

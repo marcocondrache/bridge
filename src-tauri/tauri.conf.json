@@ -14,7 +14,10 @@
       {
         "title": "bridge",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": { "x": 15, "y": 20 }
       }
     ],
     "security": {
