@@ -1,17 +1,23 @@
 # Bridge
 
-**Bridge** is a lightweight, native HTTP client built in **Rust** using the **gpui** framework — the same tech stack that powers [Zed](https://zed.dev). It’s designed for developers who want the speed of a terminal and the comfort of a native UI.
+**Bridge** is a minimal HTTP client for developers who just want to make requests and see results. Fast, keyboard-driven, and with no setup required.
 
-Bridge helps you send, inspect, and organize HTTP requests without the bulk of traditional tools. It’s fast, minimal, and built for the keyboard.
+Built with **Tauri**.
 
-### ✦ Key features
+### ✦ What it is
 
-* **Native performance** — Rust + gpui deliver instant startup and smooth interactions.
-* **Minimal design** — Focus on your requests, not the tool around them.
-* **Request workspace** — Organize endpoints, headers, and payloads with ease.
-* **Developer-centric** — Keyboard-first navigation, JSON highlighting, and raw response views.
-* **Open and hackable** — Simple architecture for custom extensions or scripts.
+- A fast, keyboard-driven HTTP client
+- A persistent request history so you can always go back
+- A clean, distraction-free interface that stays out of your way
+
+### ✦ What it is not
+
+- A Postman replacement
+- A collaboration tool
+- A place to maintain collections or environments
 
 ### ✦ Philosophy
 
-Bridge doesn’t try to be an API management platform. It’s a sharp, fast instrument for making requests and seeing results — built for developers who live in text editors and terminals.
+Most API clients ask you to invest in them before they become useful: organize your requests, name your variables, maintain your environments. That investment pays off on long-lived projects, but it's friction you don't need when exploring an unfamiliar API or chasing down a quick issue.
+
+Bridge has zero upfront cost. Every request is saved to history automatically, so nothing is ever lost and nothing needs to be managed. Speed and simplicity over ceremony.
