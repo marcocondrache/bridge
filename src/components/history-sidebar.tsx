@@ -5,6 +5,12 @@ import {
 	statusColor,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import {
+	Sidebar,
+	SidebarContent,
+	SidebarHeader,
+	SidebarRail,
+} from "./ui/sidebar";
 
 interface HistorySidebarProps {
 	items: HistoryItem[];
@@ -18,24 +24,27 @@ export function HistorySidebar({
 	onSelect,
 }: HistorySidebarProps) {
 	return (
-		<aside className="flex w-52 shrink-0 flex-col overflow-hidden border-r bg-accent">
-			<div className="flex shrink-0 items-center justify-between border-b px-2.5 py-1.5">
-				<span className="text-xs tracking-widest text-muted-foreground">
-					HISTORY
-				</span>
-				<span className="text-xs text-muted-foreground">{items.length}</span>
-			</div>
-			<div className="flex-1 overflow-y-auto">
+		<Sidebar className="absolute h-full">
+			<SidebarHeader className="p-0">
+				<div className="flex shrink-0 items-center justify-between border-b px-2.5 py-2">
+					<span className="text-xs tracking-widest text-muted-foreground">
+						HISTORY
+					</span>
+					<span className="text-xs text-muted-foreground">{items.length}</span>
+				</div>
+			</SidebarHeader>
+			<SidebarContent>
 				{items.map((item, i) => (
 					<SidebarRow
-						key={i}
+						key={item.ts}
 						item={item}
 						selected={i === selectedIndex}
 						onClick={() => onSelect(i)}
 					/>
 				))}
-			</div>
-		</aside>
+			</SidebarContent>
+			<SidebarRail />
+		</Sidebar>
 	);
 }
 

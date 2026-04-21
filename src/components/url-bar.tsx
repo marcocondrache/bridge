@@ -32,7 +32,7 @@ export function UrlBar({
 				}}
 				placeholder="https://..."
 				spellCheck={false}
-				className="flex-1 text-sm"
+				className="flex-1"
 			/>
 			<Button
 				size="sm"
