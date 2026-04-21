@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { HistorySidebar } from "./components/history-sidebar";
 import { StatusBar } from "./components/status-bar";
 import { TitleBar } from "./components/title-bar";

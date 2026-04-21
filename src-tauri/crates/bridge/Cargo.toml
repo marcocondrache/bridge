@@ -1,0 +1,20 @@
+[package]
+name = "bridge"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "A Tauri App"
+
+[lib]
+name = "bridge_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+tauri.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+bridge-http.workspace = true
