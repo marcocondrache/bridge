@@ -10,7 +10,6 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  id-token: write
   contents: read
 
 defaults:
@@ -33,7 +32,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Detect changes
-        uses: dorny/paths-filter@v4
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
         id: filter
         with:
           filters: |
@@ -123,8 +122,6 @@ jobs:
           workspaces: src-tauri
       - name: Install nextest
         uses: taiki-e/install-action@83a8c001de7da72527da9df53f6ef9d3a1f5b3e2 # nextest
-      - name: Build
-        run: cargo build --verbose
       - name: Run tests
         run: cargo nextest run --verbose --no-tests=pass
 
