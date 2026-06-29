@@ -15,5 +15,6 @@ tauri-build.workspace = true
 [dependencies]
 tauri.workspace = true
 tauri-plugin-window-state = "2.0.0"
+bridge-db = { path = "../bridge-db" }
 bridge-http = { path = "../bridge-http" }
 bridge-history = { path = "../bridge-history" }

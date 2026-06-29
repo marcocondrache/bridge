@@ -1,19 +1,16 @@
-use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use bridge_db::{Domain, SqlitePool};
+use bridge_db::SqlitePool;
 use bridge_http::{HttpRequest, HttpResponse};
 use serde::{Deserialize, Serialize};
 
-enum HistoryDomain {}
-
-impl Domain for HistoryDomain {
-    const NAME: &'static str = "history";
-    const MIGRATIONS: &'static [&'static str] = &[
+bridge_db::register_domain!(
+    "history",
+    [
         include_str!("../migrations/0001_init.sql"),
         include_str!("../migrations/0002_fts.sql"),
-    ];
-}
+    ]
+);
 
 #[derive(Serialize)]
 pub struct HistoryEntry {
@@ -74,10 +71,8 @@ pub struct History {
 }
 
 impl History {
-    pub async fn open(path: &Path) -> Result<Self, sqlx::Error> {
-        let pool = bridge_db::connect(path).await?;
-        bridge_db::migrate::<HistoryDomain>(&pool).await?;
-        Ok(Self { pool })
+    pub fn new(pool: SqlitePool) -> Self {
+        Self { pool }
     }
 
     pub async fn insert(&self, req: &HttpRequest, res: &HttpResponse) -> Result<i64, sqlx::Error> {

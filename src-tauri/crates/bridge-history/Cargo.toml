@@ -9,6 +9,7 @@ name = "bridge_history"
 [dependencies]
 bridge-db = { path = "../bridge-db" }
 bridge-http = { path = "../bridge-http" }
+
 sqlx = { workspace = true, features = ["macros"] }
 serde = { workspace = true }
 serde_json = "1"

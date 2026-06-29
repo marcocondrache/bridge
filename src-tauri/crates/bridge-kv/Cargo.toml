@@ -1,14 +1,16 @@
 [package]
-name = "bridge-db"
+name = "bridge-kv"
 version.workspace = true
 edition.workspace = true
 
 [lib]
-name = "bridge_db"
+name = "bridge_kv"
 
 [dependencies]
-inventory = { workspace = true }
-sqlx = { workspace = true, features = ["migrate"] }
+anyhow = { workspace = true }
+sqlx = { workspace = true }
+
+bridge-db = { path = "../bridge-db" }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt"] }

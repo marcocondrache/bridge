@@ -8,6 +8,8 @@ edition = "2021"
 authors = ["you"]
 
 [workspace.dependencies]
+anyhow = "1.0.103"
+inventory = "0.3.24"
 tauri = { version = "2", features = [] }
 tauri-build = { version = "2", features = [] }
 sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "sqlite"] }

@@ -39,8 +39,12 @@ pub fn run() {
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
-            let history = tauri::async_runtime::block_on(History::open(&dir.join("history.db")))?;
-            app.manage(history);
+            let pool = tauri::async_runtime::block_on(async {
+                let pool = bridge_db::connect(&dir.join("bridge.db")).await?;
+                bridge_db::migrate(&pool).await?;
+                Ok::<_, Box<dyn std::error::Error>>(pool)
+            })?;
+            app.manage(History::new(pool));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
