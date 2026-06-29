@@ -1,0 +1,10 @@
+[package]
+name = "bridge-db"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "bridge_db"
+
+[dependencies]
+sqlx = { workspace = true, features = ["migrate"] }

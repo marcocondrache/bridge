@@ -8,4 +8,4 @@ name = "bridge_http"
 
 [dependencies]
 reqwest = "0.12"
-serde = { version = "1", features = ["derive"] }
+serde = { workspace = true }
