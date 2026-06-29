@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT\n                id AS \"id!: i64\",\n                method AS \"method!\",\n                url AS \"url!\",\n                status AS \"status!: i64\",\n                request_headers AS \"request_headers!\",\n                request_body AS \"request_body\",\n                response_headers AS \"response_headers!\",\n                response_body AS \"response_body!\",\n                elapsed_ms AS \"elapsed_ms!: i64\",\n                created_at AS \"created_at!: i64\"\n            FROM requests\n            WHERE id = ?\n            ",
+  "query": "\n            SELECT\n                requests.id AS \"id!: i64\",\n                requests.method AS \"method!\",\n                requests.url AS \"url!\",\n                requests.status AS \"status!: i64\",\n                requests.request_headers AS \"request_headers!\",\n                requests.request_body AS \"request_body\",\n                requests.response_headers AS \"response_headers!\",\n                requests.response_body AS \"response_body!\",\n                requests.elapsed_ms AS \"elapsed_ms!: i64\",\n                requests.created_at AS \"created_at!: i64\"\n            FROM requests\n            JOIN requests_fts ON requests_fts.rowid = requests.id\n            WHERE requests_fts MATCH ?\n              AND (CAST(? AS TEXT) IS NULL OR requests.method = ?)\n              AND (CAST(? AS INTEGER) IS NULL OR requests.status = ?)\n              AND (CAST(? AS INTEGER) IS NULL OR requests.created_at >= ?)\n              AND (CAST(? AS INTEGER) IS NULL OR requests.created_at <= ?)\n            ORDER BY bm25(requests_fts)\n            LIMIT ?\n            ",
   "describe": {
     "columns": [
       {
@@ -115,7 +115,7 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 10
     },
     "nullable": [
       false,
@@ -130,5 +130,5 @@
       false
     ]
   },
-  "hash": "0e91c7565e601f0fbee1fc9572b8826df4cc9c036fe21cc141df72bd11e51495"
+  "hash": "ee856e8d95b3e80706623cd062a38ef55ffd82b215ff8e164f640c62e2b6a68f"
 }
