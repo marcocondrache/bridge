@@ -3,6 +3,12 @@ import { useState } from "react";
 
 import "@/App.css";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+	NativeSelect,
+	NativeSelectOption,
+} from "@/components/ui/native-select";
+import { Textarea } from "@/components/ui/textarea";
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
 
@@ -46,25 +52,24 @@ function App() {
 	return (
 		<div className="flex h-screen flex-col gap-3 p-4">
 			<div className="flex gap-2">
-				<select
+				<NativeSelect
 					value={method}
 					onChange={(e) => setMethod(e.target.value)}
-					className="rounded-md border border-border bg-background px-2 text-xs"
 				>
 					{METHODS.map((m) => (
-						<option key={m} value={m}>
+						<NativeSelectOption key={m} value={m}>
 							{m}
-						</option>
+						</NativeSelectOption>
 					))}
-				</select>
-				<input
+				</NativeSelect>
+				<Input
 					value={url}
 					onChange={(e) => setUrl(e.target.value)}
 					onKeyDown={(e) => {
 						if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
 					}}
 					placeholder="https://api.example.com"
-					className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs"
+					className="flex-1"
 				/>
 				<Button onClick={send} disabled={loading}>
 					{loading ? "Sending…" : "Send"}
@@ -72,11 +77,11 @@ function App() {
 			</div>
 
 			{method !== "GET" && method !== "HEAD" && (
-				<textarea
+				<Textarea
 					value={body}
 					onChange={(e) => setBody(e.target.value)}
 					placeholder="Request body"
-					className="h-24 rounded-md border border-border bg-background p-2 font-mono text-xs"
+					className="h-24 font-mono"
 				/>
 			)}
 
