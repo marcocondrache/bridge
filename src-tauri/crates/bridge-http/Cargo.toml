@@ -1,0 +1,11 @@
+[package]
+name = "bridge-http"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "bridge_http"
+
+[dependencies]
+reqwest = "0.12"
+serde = { version = "1", features = ["derive"] }
