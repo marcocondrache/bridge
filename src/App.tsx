@@ -1,7 +1,16 @@
+import { useHotkey } from "@tanstack/react-hotkeys";
 import { invoke } from "@tauri-apps/api/core";
 import { useState } from "react";
 
 import "@/App.css";
+import {
+	CommandPalette,
+	type PaletteCommand,
+} from "@/components/command-palette";
+import {
+	type HistoryEntry,
+	HistoryPalette,
+} from "@/components/history-palette";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,6 +35,53 @@ function App() {
 	const [response, setResponse] = useState<HttpResponse | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [historyOpen, setHistoryOpen] = useState(false);
+	const [commandsOpen, setCommandsOpen] = useState(false);
+
+	useHotkey("Mod+P", () => setHistoryOpen((o) => !o));
+	useHotkey("Mod+Shift+P", () => setCommandsOpen((o) => !o));
+	useHotkey("Mod+Enter", () => send(), {
+		enabled: Boolean(url) && !loading,
+	});
+
+	function loadEntry(entry: HistoryEntry) {
+		setMethod(entry.method);
+		setUrl(entry.url);
+		setBody(entry.request_body ?? "");
+		setResponse({
+			status: entry.status,
+			headers: entry.response_headers,
+			body: entry.response_body,
+			elapsed_ms: entry.elapsed_ms,
+		});
+		setError(null);
+	}
+
+	const commands: PaletteCommand[] = [
+		{
+			id: "send",
+			label: "Send request",
+			shortcut: "⌘↵",
+			disabled: !url || loading,
+			run: send,
+		},
+		{
+			id: "search-history",
+			label: "Search history…",
+			shortcut: "⌘P",
+			run: () => setHistoryOpen(true),
+		},
+		{
+			id: "new-request",
+			label: "New request",
+			run: () => {
+				setUrl("");
+				setBody("");
+				setResponse(null);
+				setError(null);
+			},
+		},
+	];
 
 	async function send() {
 		if (!url || loading) return;
@@ -51,6 +107,16 @@ function App() {
 
 	return (
 		<div className="flex h-screen flex-col gap-3 p-4">
+			<HistoryPalette
+				open={historyOpen}
+				onOpenChange={setHistoryOpen}
+				onSelect={loadEntry}
+			/>
+			<CommandPalette
+				open={commandsOpen}
+				onOpenChange={setCommandsOpen}
+				commands={commands}
+			/>
 			<div className="flex gap-2">
 				<NativeSelect
 					value={method}
@@ -65,9 +131,6 @@ function App() {
 				<Input
 					value={url}
 					onChange={(e) => setUrl(e.target.value)}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
-					}}
 					placeholder="https://api.example.com"
 					className="flex-1"
 				/>

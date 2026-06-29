@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT\n                id AS \"id!: i64\",\n                method AS \"method!\",\n                url AS \"url!\",\n                status AS \"status!: i64\",\n                request_headers AS \"request_headers!\",\n                request_body AS \"request_body\",\n                response_headers AS \"response_headers!\",\n                response_body AS \"response_body!\",\n                elapsed_ms AS \"elapsed_ms!: i64\",\n                created_at AS \"created_at!: i64\"\n            FROM requests\n            WHERE id = ?\n            ",
+  "query": "\n            SELECT\n                id AS \"id!: i64\",\n                method AS \"method!\",\n                url AS \"url!\",\n                status AS \"status!: i64\",\n                request_headers AS \"request_headers!\",\n                request_body AS \"request_body\",\n                response_headers AS \"response_headers!\",\n                response_body AS \"response_body!\",\n                elapsed_ms AS \"elapsed_ms!: i64\",\n                created_at AS \"created_at!: i64\"\n            FROM requests\n            WHERE (CAST(? AS TEXT) IS NULL OR method = ?)\n              AND (CAST(? AS INTEGER) IS NULL OR status = ?)\n              AND (CAST(? AS INTEGER) IS NULL OR created_at >= ?)\n              AND (CAST(? AS INTEGER) IS NULL OR created_at <= ?)\n            ORDER BY created_at DESC\n            LIMIT ?\n            ",
   "describe": {
     "columns": [
       {
@@ -115,7 +115,7 @@
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 9
     },
     "nullable": [
       false,
@@ -130,5 +130,5 @@
       false
     ]
   },
-  "hash": "0e91c7565e601f0fbee1fc9572b8826df4cc9c036fe21cc141df72bd11e51495"
+  "hash": "af60c4bc7d88daf5ee5fd854da39a793f6d341666c8f07e98ff28337b99123f8"
 }
