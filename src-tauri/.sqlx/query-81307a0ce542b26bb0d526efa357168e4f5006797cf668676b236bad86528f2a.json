@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO requests\n                (method, url, status, request_headers, request_body,\n                 response_headers, response_body, elapsed_ms, created_at)\n             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "81307a0ce542b26bb0d526efa357168e4f5006797cf668676b236bad86528f2a"
+}

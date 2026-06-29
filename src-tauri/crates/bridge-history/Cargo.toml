@@ -7,7 +7,8 @@ edition.workspace = true
 name = "bridge_history"
 
 [dependencies]
+bridge-db = { path = "../bridge-db" }
 bridge-http = { path = "../bridge-http" }
-rusqlite = { version = "0.32", features = ["bundled"] }
-serde = { version = "1", features = ["derive"] }
+sqlx = { workspace = true, features = ["macros"] }
+serde = { workspace = true }
 serde_json = "1"
