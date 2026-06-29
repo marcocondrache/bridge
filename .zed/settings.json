@@ -1,5 +1,12 @@
 {
   "languages": {
+    "CSS": {
+      "language_servers": [
+        "tailwindcss-intellisense-css",
+        "!vscode-css-language-server",
+        "...",
+      ],
+    },
     "JavaScript": {
       "formatter": { "language_server": { "name": "biome" } },
       "code_actions_on_format": {
