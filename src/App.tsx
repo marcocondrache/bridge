@@ -7,6 +7,7 @@ import {
 	CommandPalette,
 	type PaletteCommand,
 } from "@/components/command-palette";
+import { type Header, HeadersEditor } from "@/components/headers-editor";
 import {
 	type HistoryEntry,
 	HistoryPalette,
@@ -17,6 +18,7 @@ import {
 	NativeSelect,
 	NativeSelectOption,
 } from "@/components/ui/native-select";
+import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
@@ -32,6 +34,7 @@ function App() {
 	const [method, setMethod] = useState("GET");
 	const [url, setUrl] = useState("");
 	const [body, setBody] = useState("");
+	const [headers, setHeaders] = useState<Header[]>([]);
 	const [response, setResponse] = useState<HttpResponse | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -48,6 +51,7 @@ function App() {
 		setMethod(entry.method);
 		setUrl(entry.url);
 		setBody(entry.request_body ?? "");
+		setHeaders(entry.request_headers.map(([key, value]) => ({ key, value })));
 		setResponse({
 			status: entry.status,
 			headers: entry.response_headers,
@@ -77,6 +81,7 @@ function App() {
 			run: () => {
 				setUrl("");
 				setBody("");
+				setHeaders([]);
 				setResponse(null);
 				setError(null);
 			},
@@ -92,7 +97,9 @@ function App() {
 				request: {
 					method,
 					url,
-					headers: [],
+					headers: headers
+						.filter((h) => h.key.trim())
+						.map((h) => [h.key, h.value]),
 					body: body || null,
 				},
 			});
@@ -106,7 +113,7 @@ function App() {
 	}
 
 	return (
-		<div className="flex h-screen flex-col gap-3 p-4">
+		<div className="flex h-screen flex-col gap-3 px-4 pb-4">
 			<HistoryPalette
 				open={historyOpen}
 				onOpenChange={setHistoryOpen}
@@ -117,6 +124,8 @@ function App() {
 				onOpenChange={setCommandsOpen}
 				commands={commands}
 			/>
+			{/* Draggable strip clearing the overlay traffic lights */}
+			<div data-tauri-drag-region className="h-8 shrink-0" />
 			<div className="flex gap-2">
 				<NativeSelect
 					value={method}
@@ -139,28 +148,37 @@ function App() {
 				</Button>
 			</div>
 
-			{method !== "GET" && method !== "HEAD" && (
-				<Textarea
-					value={body}
-					onChange={(e) => setBody(e.target.value)}
-					placeholder="Request body"
-					className="h-24 font-mono"
-				/>
-			)}
+			<ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
+				<ResizablePanel defaultSize={45} minSize={20}>
+					<div className="flex h-full flex-col gap-3 overflow-auto">
+						<HeadersEditor headers={headers} onChange={setHeaders} />
 
-			<div className="flex-1 overflow-auto rounded-md border border-border p-2">
-				{error && <pre className="text-xs text-destructive">{error}</pre>}
-				{response && (
-					<div className="flex flex-col gap-2">
-						<div className="text-xs text-muted-foreground">
-							{response.status} · {response.elapsed_ms}ms
-						</div>
-						<pre className="font-mono text-xs whitespace-pre-wrap">
-							{response.body}
-						</pre>
+						{method !== "GET" && method !== "HEAD" && (
+							<Textarea
+								value={body}
+								onChange={(e) => setBody(e.target.value)}
+								placeholder="Request body"
+								className="flex-1 font-mono"
+							/>
+						)}
 					</div>
-				)}
-			</div>
+				</ResizablePanel>
+				<ResizablePanel defaultSize={55} minSize={20}>
+					<div className="h-full overflow-auto rounded-md border border-border p-2">
+						{error && <pre className="text-xs text-destructive">{error}</pre>}
+						{response && (
+							<div className="flex flex-col gap-2">
+								<div className="text-xs text-muted-foreground">
+									{response.status} · {response.elapsed_ms}ms
+								</div>
+								<pre className="font-mono text-xs whitespace-pre-wrap">
+									{response.body}
+								</pre>
+							</div>
+						)}
+					</div>
+				</ResizablePanel>
+			</ResizablePanelGroup>
 		</div>
 	);
 }
