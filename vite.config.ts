@@ -11,7 +11,7 @@ export default defineConfig(async () => ({
 
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(import.meta.dirname, "./src"),
     },
   },
 
@@ -23,7 +23,7 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
+    host,
     hmr: host
       ? {
           protocol: "ws",

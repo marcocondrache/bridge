@@ -7,6 +7,13 @@
         "..."
       ]
     },
+    "JSON": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      }
+    },
     "JavaScript": {
       "formatter": {
         "language_server": {
