@@ -15,6 +15,10 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "matchManagers": ["cargo"],
+      "rangeStrategy": "in-range-only"
     }
   ]
 }

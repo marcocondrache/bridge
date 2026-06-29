@@ -9,6 +9,7 @@
   packages = [
     pkgs.cargo-machete
     pkgs.cargo-tauri
+    pkgs.biome
   ];
 
   scripts.x = {
