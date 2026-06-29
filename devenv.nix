@@ -10,4 +10,10 @@
     pkgs.cargo-machete
     pkgs.cargo-tauri
   ];
+
+  scripts.x = {
+    exec = ''
+      bun tauri "$@";
+    '';
+  };
 }
