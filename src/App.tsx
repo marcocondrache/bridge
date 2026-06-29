@@ -7,7 +7,10 @@ import {
 	CommandPalette,
 	type PaletteCommand,
 } from "@/components/command-palette";
-import { type Header, HeadersEditor } from "@/components/headers-editor";
+import {
+	type KeyValuePair,
+	KeyValueEditor,
+} from "@/components/key-value-editor";
 import {
 	type HistoryEntry,
 	HistoryPalette,
@@ -19,9 +22,18 @@ import {
 	NativeSelectOption,
 } from "@/components/ui/native-select";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+
+function withParams(url: string, params: KeyValuePair[]): string {
+	const qs = new URLSearchParams(
+		params.filter((p) => p.key.trim()).map((p) => [p.key, p.value]),
+	).toString();
+	if (!qs) return url;
+	return url + (url.includes("?") ? "&" : "?") + qs;
+}
 
 type HttpResponse = {
 	status: number;
@@ -34,7 +46,8 @@ function App() {
 	const [method, setMethod] = useState("GET");
 	const [url, setUrl] = useState("");
 	const [body, setBody] = useState("");
-	const [headers, setHeaders] = useState<Header[]>([]);
+	const [headers, setHeaders] = useState<KeyValuePair[]>([]);
+	const [params, setParams] = useState<KeyValuePair[]>([]);
 	const [response, setResponse] = useState<HttpResponse | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -82,6 +95,7 @@ function App() {
 				setUrl("");
 				setBody("");
 				setHeaders([]);
+				setParams([]);
 				setResponse(null);
 				setError(null);
 			},
@@ -96,7 +110,7 @@ function App() {
 			const res = await invoke<HttpResponse>("send_request", {
 				request: {
 					method,
-					url,
+					url: withParams(url, params),
 					headers: headers
 						.filter((h) => h.key.trim())
 						.map((h) => [h.key, h.value]),
@@ -150,18 +164,45 @@ function App() {
 
 			<ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1">
 				<ResizablePanel defaultSize={45} minSize={20}>
-					<div className="flex h-full flex-col gap-3 overflow-auto">
-						<HeadersEditor headers={headers} onChange={setHeaders} />
-
-						{method !== "GET" && method !== "HEAD" && (
-							<Textarea
-								value={body}
-								onChange={(e) => setBody(e.target.value)}
-								placeholder="Request body"
-								className="flex-1 font-mono"
+					<Tabs
+						defaultValue="headers"
+						className="h-full min-h-0 overflow-hidden"
+					>
+						<TabsList>
+							<TabsTrigger value="headers">Headers</TabsTrigger>
+							<TabsTrigger value="params">Params</TabsTrigger>
+							{method !== "GET" && method !== "HEAD" && (
+								<TabsTrigger value="body">Body</TabsTrigger>
+							)}
+						</TabsList>
+						<TabsContent value="headers" className="min-h-0 overflow-auto">
+							<KeyValueEditor
+								pairs={headers}
+								onChange={setHeaders}
+								noun="header"
 							/>
+						</TabsContent>
+						<TabsContent value="params" className="min-h-0 overflow-auto">
+							<KeyValueEditor
+								pairs={params}
+								onChange={setParams}
+								noun="param"
+							/>
+						</TabsContent>
+						{method !== "GET" && method !== "HEAD" && (
+							<TabsContent
+								value="body"
+								className="flex min-h-0 flex-col overflow-auto"
+							>
+								<Textarea
+									value={body}
+									onChange={(e) => setBody(e.target.value)}
+									placeholder="Request body"
+									className="flex-1 font-mono"
+								/>
+							</TabsContent>
 						)}
-					</div>
+					</Tabs>
 				</ResizablePanel>
 				<ResizablePanel defaultSize={55} minSize={20}>
 					<div className="h-full overflow-auto rounded-md border border-border p-2">

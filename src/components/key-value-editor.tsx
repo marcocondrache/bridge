@@ -4,36 +4,39 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export type Header = { key: string; value: string };
+export type KeyValuePair = { key: string; value: string };
 
 type Props = {
-	headers: Header[];
-	onChange: (headers: Header[]) => void;
+	pairs: KeyValuePair[];
+	onChange: (pairs: KeyValuePair[]) => void;
+	noun?: string;
 };
 
-export function HeadersEditor({ headers, onChange }: Props) {
-	function update(i: number, patch: Partial<Header>) {
-		onChange(headers.map((h, idx) => (idx === i ? { ...h, ...patch } : h)));
+export function KeyValueEditor({ pairs, onChange, noun = "entry" }: Props) {
+	function update(i: number, patch: Partial<KeyValuePair>) {
+		onChange(pairs.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
 	}
 	function remove(i: number) {
-		onChange(headers.filter((_, idx) => idx !== i));
+		onChange(pairs.filter((_, idx) => idx !== i));
 	}
 	function add() {
-		onChange([...headers, { key: "", value: "" }]);
+		onChange([...pairs, { key: "", value: "" }]);
 	}
+
+	const Noun = noun.charAt(0).toUpperCase() + noun.slice(1);
 
 	return (
 		<div className="flex flex-col gap-2">
-			{headers.map((h, i) => (
+			{pairs.map((p, i) => (
 				<div key={i} className="flex gap-2">
 					<Input
-						value={h.key}
+						value={p.key}
 						onChange={(e) => update(i, { key: e.target.value })}
-						placeholder="Header"
+						placeholder={Noun}
 						className="flex-1 font-mono"
 					/>
 					<Input
-						value={h.value}
+						value={p.value}
 						onChange={(e) => update(i, { value: e.target.value })}
 						placeholder="Value"
 						className="flex-1 font-mono"
@@ -42,7 +45,7 @@ export function HeadersEditor({ headers, onChange }: Props) {
 						variant="ghost"
 						size="icon"
 						onClick={() => remove(i)}
-						aria-label="Remove header"
+						aria-label={`Remove ${noun}`}
 					>
 						<HugeiconsIcon icon={Cancel01Icon} />
 					</Button>
@@ -50,7 +53,7 @@ export function HeadersEditor({ headers, onChange }: Props) {
 			))}
 			<Button variant="outline" size="sm" onClick={add} className="self-start">
 				<HugeiconsIcon icon={PlusSignIcon} data-icon="inline-start" />
-				Add header
+				Add {noun}
 			</Button>
 		</div>
 	);
