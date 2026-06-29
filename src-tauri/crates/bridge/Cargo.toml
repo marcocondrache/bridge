@@ -14,9 +14,4 @@ tauri-build.workspace = true
 
 [dependencies]
 tauri.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-
-bridge-http.workspace = true
-
 tauri-plugin-window-state = "2.0.0"
