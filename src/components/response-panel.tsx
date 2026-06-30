@@ -1,7 +1,25 @@
 import { HeaderTable } from "@/components/header-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { JsonViewer } from "@/components/viewers/json-viewer";
 import { contentType, formatBytes, parseCookies } from "@/lib/http";
 import { useRequestStore } from "@/lib/store";
+
+function ResponseBody({
+  body,
+  headers,
+}: {
+  body: string;
+  headers: [string, string][];
+}) {
+  if (contentType(headers).includes("json")) {
+    try {
+      return <JsonViewer data={JSON.parse(body)} />;
+    } catch {
+      // ponytail: malformed JSON falls through to raw text
+    }
+  }
+  return <pre className="whitespace-pre-wrap font-mono text-xs">{body}</pre>;
+}
 
 export function ResponsePanel() {
   const response = useRequestStore((s) => s.response);
@@ -50,9 +68,7 @@ export function ResponsePanel() {
             </div>
           </div>
           <TabsContent className="min-h-0 overflow-auto" value="body">
-            <pre className="whitespace-pre-wrap font-mono text-xs">
-              {response.body}
-            </pre>
+            <ResponseBody body={response.body} headers={response.headers} />
           </TabsContent>
           <TabsContent className="min-h-0 overflow-auto" value="headers">
             <HeaderTable rows={response.headers} />
