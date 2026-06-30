@@ -11,9 +11,18 @@ pub struct HttpRequest {
 #[derive(Serialize)]
 pub struct HttpResponse {
     pub status: u16,
+    pub status_text: String,
     pub headers: Vec<(String, String)>,
     pub body: String,
     pub elapsed_ms: u64,
+}
+
+pub fn status_text(status: u16) -> String {
+    reqwest::StatusCode::from_u16(status)
+        .ok()
+        .and_then(|s| s.canonical_reason())
+        .unwrap_or_default()
+        .to_string()
 }
 
 pub async fn execute(request: &HttpRequest) -> Result<HttpResponse, String> {
@@ -43,6 +52,7 @@ pub async fn execute(request: &HttpRequest) -> Result<HttpResponse, String> {
 
     Ok(HttpResponse {
         status,
+        status_text: status_text(status),
         headers,
         body,
         elapsed_ms: start.elapsed().as_millis() as u64,

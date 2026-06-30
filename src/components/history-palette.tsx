@@ -21,6 +21,7 @@ export interface HistoryEntry {
   response_body: string;
   response_headers: [string, string][];
   status: number;
+  status_text: string;
   url: string;
 }
 

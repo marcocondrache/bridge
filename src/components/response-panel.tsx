@@ -1,0 +1,79 @@
+import { HeaderTable } from "@/components/header-table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  contentType,
+  formatBytes,
+  type HttpResponse,
+  parseCookies,
+} from "@/lib/http";
+
+interface Props {
+  error: string | null;
+  response: HttpResponse | null;
+}
+
+export function ResponsePanel({ response, error }: Props) {
+  return (
+    <div className="flex h-full flex-col rounded-md border border-border">
+      {error && (
+        <pre className="overflow-auto p-2 text-destructive text-xs">
+          {error}
+        </pre>
+      )}
+      {response && (
+        <Tabs className="h-full min-h-0 overflow-hidden" defaultValue="body">
+          <div className="flex items-center justify-between gap-2">
+            <TabsList>
+              <TabsTrigger value="body">Body</TabsTrigger>
+              <TabsTrigger value="headers">
+                Headers ({response.headers.length})
+              </TabsTrigger>
+              <TabsTrigger value="cookies">
+                Cookies ({parseCookies(response.headers).length})
+              </TabsTrigger>
+            </TabsList>
+            <div className="flex shrink-0 items-center gap-3 pr-1 text-xs">
+              <span
+                className={
+                  response.status < 400
+                    ? "font-medium text-emerald-600 dark:text-emerald-400"
+                    : "font-medium text-destructive"
+                }
+              >
+                {response.status} {response.status_text}
+              </span>
+              <span className="text-muted-foreground">
+                {response.elapsed_ms}ms
+              </span>
+              <span className="text-muted-foreground">
+                {formatBytes(new Blob([response.body]).size)}
+              </span>
+              {contentType(response.headers) && (
+                <span className="truncate text-muted-foreground">
+                  {contentType(response.headers)}
+                </span>
+              )}
+            </div>
+          </div>
+          <TabsContent className="min-h-0 overflow-auto" value="body">
+            <pre className="whitespace-pre-wrap font-mono text-xs">
+              {response.body}
+            </pre>
+          </TabsContent>
+          <TabsContent className="min-h-0 overflow-auto" value="headers">
+            <HeaderTable rows={response.headers} />
+          </TabsContent>
+          <TabsContent className="min-h-0 overflow-auto" value="cookies">
+            {parseCookies(response.headers).length === 0 ? (
+              <div className="p-2 text-muted-foreground text-xs">
+                No cookies
+              </div>
+            ) : (
+              <HeaderTable rows={parseCookies(response.headers)} />
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
+    </div>
+  );
+}

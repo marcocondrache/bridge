@@ -11,10 +11,9 @@ import {
   type HistoryEntry,
   HistoryPalette,
 } from "@/components/history-palette";
-import {
-  KeyValueEditor,
-  type KeyValuePair,
-} from "@/components/key-value-editor";
+import type { KeyValuePair } from "@/components/key-value-editor";
+import { RequestPanel } from "@/components/request-panel";
+import { ResponsePanel } from "@/components/response-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,103 +21,7 @@ import {
   NativeSelectOption,
 } from "@/components/ui/native-select";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-
-const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
-
-function withParams(url: string, params: KeyValuePair[]): string {
-  const qs = new URLSearchParams(
-    params.filter((p) => p.key.trim()).map((p) => [p.key, p.value])
-  ).toString();
-  if (!qs) {
-    return url;
-  }
-  return url + (url.includes("?") ? "&" : "?") + qs;
-}
-
-interface HttpResponse {
-  body: string;
-  elapsed_ms: number;
-  headers: [string, string][];
-  status: number;
-}
-
-const STATUS_TEXT: Record<number, string> = {
-  200: "OK",
-  201: "Created",
-  204: "No Content",
-  301: "Moved Permanently",
-  302: "Found",
-  304: "Not Modified",
-  400: "Bad Request",
-  401: "Unauthorized",
-  403: "Forbidden",
-  404: "Not Found",
-  405: "Method Not Allowed",
-  409: "Conflict",
-  422: "Unprocessable Entity",
-  429: "Too Many Requests",
-  500: "Internal Server Error",
-  502: "Bad Gateway",
-  503: "Service Unavailable",
-  504: "Gateway Timeout",
-};
-
-function statusText(status: number): string {
-  return STATUS_TEXT[status] ?? "";
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function contentType(headers: [string, string][]): string {
-  const ct = headers.find(([k]) => k.toLowerCase() === "content-type")?.[1];
-  return ct?.split(";")[0]?.trim() ?? "";
-}
-
-function parseCookies(headers: [string, string][]): [string, string][] {
-  return headers
-    .filter(([k]) => k.toLowerCase() === "set-cookie")
-    .map(([, v]) => {
-      const [pair, ...attrs] = v.split(";");
-      const eq = pair.indexOf("=");
-      const name = eq === -1 ? pair.trim() : pair.slice(0, eq).trim();
-      const value = eq === -1 ? "" : pair.slice(eq + 1).trim();
-      const meta = attrs.map((a) => a.trim()).join("; ");
-      return [name, meta ? `${value}  ·  ${meta}` : value];
-    });
-}
-
-function HeaderTable({ rows }: { rows: [string, string][] }) {
-  return (
-    <table className="w-full text-xs">
-      <tbody>
-        {rows.map(([key, value], i) => (
-          <tr
-            className="align-top"
-            key={`${key}-${
-              // biome-ignore lint/suspicious/noArrayIndexKey: stable
-              i
-            }`}
-          >
-            <td className="whitespace-nowrap py-1 pr-3 font-medium text-muted-foreground">
-              {key}
-            </td>
-            <td className="break-all py-1 font-mono">{value}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
+import { type HttpResponse, METHODS, withParams } from "@/lib/http";
 
 function App() {
   const [method, setMethod] = useState("GET");
@@ -145,6 +48,7 @@ function App() {
     setHeaders(entry.request_headers.map(([key, value]) => ({ key, value })));
     setResponse({
       status: entry.status,
+      status_text: entry.status_text,
       headers: entry.response_headers,
       body: entry.response_body,
       elapsed_ms: entry.elapsed_ms,
@@ -244,111 +148,18 @@ function App() {
 
       <ResizablePanelGroup className="min-h-0 flex-1" orientation="vertical">
         <ResizablePanel defaultSize={45} minSize={20}>
-          <Tabs
-            className="h-full min-h-0 overflow-hidden"
-            defaultValue="headers"
-          >
-            <TabsList>
-              <TabsTrigger value="headers">Headers</TabsTrigger>
-              <TabsTrigger value="params">Params</TabsTrigger>
-              {method !== "GET" && method !== "HEAD" && (
-                <TabsTrigger value="body">Body</TabsTrigger>
-              )}
-            </TabsList>
-            <TabsContent className="min-h-0 overflow-auto" value="headers">
-              <KeyValueEditor
-                noun="header"
-                onChange={setHeaders}
-                pairs={headers}
-              />
-            </TabsContent>
-            <TabsContent className="min-h-0 overflow-auto" value="params">
-              <KeyValueEditor
-                noun="param"
-                onChange={setParams}
-                pairs={params}
-              />
-            </TabsContent>
-            {method !== "GET" && method !== "HEAD" && (
-              <TabsContent
-                className="flex min-h-0 flex-col overflow-auto"
-                value="body"
-              >
-                <Textarea
-                  className="flex-1 font-mono"
-                  onChange={(e) => setBody(e.target.value)}
-                  placeholder="Request body"
-                  value={body}
-                />
-              </TabsContent>
-            )}
-          </Tabs>
+          <RequestPanel
+            body={body}
+            headers={headers}
+            method={method}
+            onBodyChange={setBody}
+            onHeadersChange={setHeaders}
+            onParamsChange={setParams}
+            params={params}
+          />
         </ResizablePanel>
         <ResizablePanel defaultSize={55} minSize={20}>
-          <div className="flex h-full flex-col rounded-md border border-border">
-            {error && (
-              <pre className="overflow-auto p-2 text-destructive text-xs">
-                {error}
-              </pre>
-            )}
-            {response && (
-              <Tabs
-                className="h-full min-h-0 overflow-hidden"
-                defaultValue="body"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <TabsList>
-                    <TabsTrigger value="body">Body</TabsTrigger>
-                    <TabsTrigger value="headers">
-                      Headers ({response.headers.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="cookies">
-                      Cookies ({parseCookies(response.headers).length})
-                    </TabsTrigger>
-                  </TabsList>
-                  <div className="flex shrink-0 items-center gap-3 pr-1 text-xs">
-                    <span
-                      className={
-                        response.status < 400
-                          ? "font-medium text-emerald-600 dark:text-emerald-400"
-                          : "font-medium text-destructive"
-                      }
-                    >
-                      {response.status} {statusText(response.status)}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {response.elapsed_ms}ms
-                    </span>
-                    <span className="text-muted-foreground">
-                      {formatBytes(new Blob([response.body]).size)}
-                    </span>
-                    {contentType(response.headers) && (
-                      <span className="truncate text-muted-foreground">
-                        {contentType(response.headers)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <TabsContent className="min-h-0 overflow-auto" value="body">
-                  <pre className="whitespace-pre-wrap font-mono text-xs">
-                    {response.body}
-                  </pre>
-                </TabsContent>
-                <TabsContent className="min-h-0 overflow-auto" value="headers">
-                  <HeaderTable rows={response.headers} />
-                </TabsContent>
-                <TabsContent className="min-h-0 overflow-auto" value="cookies">
-                  {parseCookies(response.headers).length === 0 ? (
-                    <div className="p-2 text-muted-foreground text-xs">
-                      No cookies
-                    </div>
-                  ) : (
-                    <HeaderTable rows={parseCookies(response.headers)} />
-                  )}
-                </TabsContent>
-              </Tabs>
-            )}
-          </div>
+          <ResponsePanel error={error} response={response} />
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
