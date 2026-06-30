@@ -29,6 +29,7 @@ export function CommandPalette() {
   const send = useRequestStore((s) => s.send);
   const setHistoryOpen = useRequestStore((s) => s.setHistoryOpen);
   const newRequest = useRequestStore((s) => s.newRequest);
+  const newTab = useRequestStore((s) => s.newTab);
 
   useHotkey("Mod+Shift+P", toggle);
 
@@ -45,6 +46,12 @@ export function CommandPalette() {
       label: "Search history…",
       shortcut: "⌘P",
       run: () => setHistoryOpen(true),
+    },
+    {
+      id: "new-tab",
+      label: "New tab",
+      shortcut: "⌘T",
+      run: newTab,
     },
     {
       id: "new-request",

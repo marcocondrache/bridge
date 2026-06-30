@@ -4,6 +4,7 @@ import { HistoryPalette } from "@/components/history-palette";
 import { RequestBar } from "@/components/request-bar";
 import { RequestPanel } from "@/components/request-panel";
 import { ResponsePanel } from "@/components/response-panel";
+import { TabBar } from "@/components/tab-bar";
 import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
       <CommandPalette />
       {/* Draggable strip clearing the overlay traffic lights */}
       <div className="h-8 shrink-0" data-tauri-drag-region />
+      <TabBar />
       <RequestBar />
       <ResizablePanelGroup className="min-h-0 flex-1" orientation="vertical">
         <ResizablePanel defaultSize={45} minSize={20}>

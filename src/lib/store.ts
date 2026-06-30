@@ -5,34 +5,25 @@ import type { HistoryEntry } from "@/components/history-palette";
 import type { KeyValuePair } from "@/components/key-value-editor";
 import { type HttpResponse, withParams } from "@/lib/http";
 
-interface RequestState {
+// Fields that belong to a single request tab. Top-level store fields hold the
+// live active tab; `tabs` keeps snapshots, refreshed when switching away.
+interface TabState {
   body: string;
-  commandsOpen: boolean;
   error: string | null;
   headers: KeyValuePair[];
-  historyOpen: boolean;
-  loadEntry: (entry: HistoryEntry) => void;
   loading: boolean;
   method: string;
-  newRequest: () => void;
   params: KeyValuePair[];
   response: HttpResponse | null;
-
-  send: () => Promise<void>;
-  setBody: (body: string) => void;
-  setCommandsOpen: (open: boolean) => void;
-  setHeaders: (headers: KeyValuePair[]) => void;
-  setHistoryOpen: (open: boolean) => void;
-
-  setMethod: (method: string) => void;
-  setParams: (params: KeyValuePair[]) => void;
-  setUrl: (url: string) => void;
-  toggleCommands: () => void;
-  toggleHistory: () => void;
   url: string;
 }
 
-export const useRequestStore = create<RequestState>((set, get) => ({
+interface Tab {
+  id: number;
+  state: TabState;
+}
+
+const blankTab = (): TabState => ({
   method: "GET",
   url: "",
   body: "",
@@ -41,6 +32,45 @@ export const useRequestStore = create<RequestState>((set, get) => ({
   response: null,
   error: null,
   loading: false,
+});
+
+const snapshot = (s: TabState): TabState => ({
+  method: s.method,
+  url: s.url,
+  body: s.body,
+  headers: s.headers,
+  params: s.params,
+  response: s.response,
+  error: s.error,
+  loading: s.loading,
+});
+
+interface RequestState extends TabState {
+  activeTabId: number;
+  closeTab: (id: number) => void;
+  commandsOpen: boolean;
+  historyOpen: boolean;
+  loadEntry: (entry: HistoryEntry) => void;
+  newRequest: () => void;
+  newTab: () => void;
+  send: () => Promise<void>;
+  setBody: (body: string) => void;
+  setCommandsOpen: (open: boolean) => void;
+  setHeaders: (headers: KeyValuePair[]) => void;
+  setHistoryOpen: (open: boolean) => void;
+  setMethod: (method: string) => void;
+  setParams: (params: KeyValuePair[]) => void;
+  setUrl: (url: string) => void;
+  switchTab: (id: number) => void;
+  tabs: Tab[];
+  toggleCommands: () => void;
+  toggleHistory: () => void;
+}
+
+export const useRequestStore = create<RequestState>((set, get) => ({
+  ...blankTab(),
+  tabs: [{ id: 0, state: blankTab() }],
+  activeTabId: 0,
   historyOpen: false,
   commandsOpen: false,
 
@@ -103,5 +133,53 @@ export const useRequestStore = create<RequestState>((set, get) => ({
       params: [],
       response: null,
       error: null,
+    }),
+
+  newTab: () =>
+    set((s) => {
+      const id = Math.max(...s.tabs.map((t) => t.id)) + 1;
+      return {
+        tabs: [
+          ...s.tabs.map((t) =>
+            t.id === s.activeTabId ? { ...t, state: snapshot(s) } : t
+          ),
+          { id, state: blankTab() },
+        ],
+        activeTabId: id,
+        ...blankTab(),
+      };
+    }),
+
+  switchTab: (id) =>
+    set((s) => {
+      if (id === s.activeTabId) {
+        return {};
+      }
+      const target = s.tabs.find((t) => t.id === id);
+      if (!target) {
+        return {};
+      }
+      return {
+        tabs: s.tabs.map((t) =>
+          t.id === s.activeTabId ? { ...t, state: snapshot(s) } : t
+        ),
+        activeTabId: id,
+        ...target.state,
+      };
+    }),
+
+  closeTab: (id) =>
+    set((s) => {
+      // ponytail: always keep at least one tab open
+      if (s.tabs.length === 1) {
+        return {};
+      }
+      const idx = s.tabs.findIndex((t) => t.id === id);
+      const remaining = s.tabs.filter((t) => t.id !== id);
+      if (id !== s.activeTabId) {
+        return { tabs: remaining };
+      }
+      const next = remaining[Math.min(idx, remaining.length - 1)];
+      return { tabs: remaining, activeTabId: next.id, ...next.state };
     }),
 }));
