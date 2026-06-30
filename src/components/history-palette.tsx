@@ -1,4 +1,3 @@
-import { useHotkey } from "@tanstack/react-hotkeys";
 import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 
@@ -46,12 +45,9 @@ function timeAgo(ms: number): string {
 export function HistoryPalette() {
   const open = useRequestStore((s) => s.historyOpen);
   const onOpenChange = useRequestStore((s) => s.setHistoryOpen);
-  const toggle = useRequestStore((s) => s.toggleHistory);
   const onSelect = useRequestStore((s) => s.loadEntry);
   const [search, setSearch] = useState("");
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
-
-  useHotkey("Mod+P", toggle);
 
   // Debounced FTS query to the Rust backend (bm25-ranked, top results).
   useEffect(() => {

@@ -1,5 +1,3 @@
-import { useHotkey } from "@tanstack/react-hotkeys";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,10 +14,6 @@ export function RequestBar() {
   const setMethod = useRequestStore((s) => s.setMethod);
   const setUrl = useRequestStore((s) => s.setUrl);
   const send = useRequestStore((s) => s.send);
-
-  useHotkey("Mod+Enter", () => send(), {
-    enabled: Boolean(url) && !loading,
-  });
 
   return (
     <div className="flex gap-2">

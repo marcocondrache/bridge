@@ -1,5 +1,3 @@
-import { useHotkey } from "@tanstack/react-hotkeys";
-
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRequestStore } from "@/lib/store";
 
@@ -11,9 +9,6 @@ export function TabBar() {
   const newTab = useRequestStore((s) => s.newTab);
   const closeTab = useRequestStore((s) => s.closeTab);
   const switchTab = useRequestStore((s) => s.switchTab);
-
-  useHotkey("Mod+T", newTab);
-  useHotkey("Mod+W", () => closeTab(activeTabId));
 
   return (
     <Tabs

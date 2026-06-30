@@ -45,11 +45,12 @@ const snapshot = (s: TabState): TabState => ({
   loading: s.loading,
 });
 
-interface RequestState extends TabState {
+export interface RequestState extends TabState {
   activeTabId: number;
   closeTab: (id: number) => void;
   commandsOpen: boolean;
   historyOpen: boolean;
+  keybindings: Record<string, string>;
   loadEntry: (entry: HistoryEntry) => void;
   newRequest: () => void;
   newTab: () => void;
@@ -58,6 +59,7 @@ interface RequestState extends TabState {
   setCommandsOpen: (open: boolean) => void;
   setHeaders: (headers: KeyValuePair[]) => void;
   setHistoryOpen: (open: boolean) => void;
+  setKeybinding: (id: string, keys: string) => void;
   setMethod: (method: string) => void;
   setParams: (params: KeyValuePair[]) => void;
   setUrl: (url: string) => void;
@@ -73,6 +75,10 @@ export const useRequestStore = create<RequestState>((set, get) => ({
   activeTabId: 0,
   historyOpen: false,
   commandsOpen: false,
+  keybindings: {},
+
+  setKeybinding: (id, keys) =>
+    set((s) => ({ keybindings: { ...s.keybindings, [id]: keys } })),
 
   setMethod: (method) => set({ method }),
   setUrl: (url) => set({ url }),
