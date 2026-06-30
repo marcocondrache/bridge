@@ -1,29 +1,17 @@
-import {
-  KeyValueEditor,
-  type KeyValuePair,
-} from "@/components/key-value-editor";
+import { KeyValueEditor } from "@/components/key-value-editor";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useRequestStore } from "@/lib/store";
 
-interface Props {
-  body: string;
-  headers: KeyValuePair[];
-  method: string;
-  onBodyChange: (body: string) => void;
-  onHeadersChange: (pairs: KeyValuePair[]) => void;
-  onParamsChange: (pairs: KeyValuePair[]) => void;
-  params: KeyValuePair[];
-}
+export function RequestPanel() {
+  const method = useRequestStore((s) => s.method);
+  const headers = useRequestStore((s) => s.headers);
+  const params = useRequestStore((s) => s.params);
+  const body = useRequestStore((s) => s.body);
+  const setHeaders = useRequestStore((s) => s.setHeaders);
+  const setParams = useRequestStore((s) => s.setParams);
+  const setBody = useRequestStore((s) => s.setBody);
 
-export function RequestPanel({
-  method,
-  headers,
-  params,
-  body,
-  onHeadersChange,
-  onParamsChange,
-  onBodyChange,
-}: Props) {
   const hasBody = method !== "GET" && method !== "HEAD";
 
   return (
@@ -34,14 +22,10 @@ export function RequestPanel({
         {hasBody && <TabsTrigger value="body">Body</TabsTrigger>}
       </TabsList>
       <TabsContent className="min-h-0 overflow-auto" value="headers">
-        <KeyValueEditor
-          noun="header"
-          onChange={onHeadersChange}
-          pairs={headers}
-        />
+        <KeyValueEditor noun="header" onChange={setHeaders} pairs={headers} />
       </TabsContent>
       <TabsContent className="min-h-0 overflow-auto" value="params">
-        <KeyValueEditor noun="param" onChange={onParamsChange} pairs={params} />
+        <KeyValueEditor noun="param" onChange={setParams} pairs={params} />
       </TabsContent>
       {hasBody && (
         <TabsContent
@@ -50,7 +34,7 @@ export function RequestPanel({
         >
           <Textarea
             className="flex-1 font-mono"
-            onChange={(e) => onBodyChange(e.target.value)}
+            onChange={(e) => setBody(e.target.value)}
             placeholder="Request body"
             value={body}
           />

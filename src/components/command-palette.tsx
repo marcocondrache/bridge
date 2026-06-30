@@ -1,3 +1,5 @@
+import { useHotkey } from "@tanstack/react-hotkeys";
+
 import {
   Command,
   CommandDialog,
@@ -8,8 +10,9 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
+import { useRequestStore } from "@/lib/store";
 
-export interface PaletteCommand {
+interface PaletteCommand {
   disabled?: boolean;
   id: string;
   label: string;
@@ -17,17 +20,43 @@ export interface PaletteCommand {
   shortcut?: string;
 }
 
-interface Props {
-  commands: PaletteCommand[];
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-}
+export function CommandPalette() {
+  const open = useRequestStore((s) => s.commandsOpen);
+  const setOpen = useRequestStore((s) => s.setCommandsOpen);
+  const toggle = useRequestStore((s) => s.toggleCommands);
+  const url = useRequestStore((s) => s.url);
+  const loading = useRequestStore((s) => s.loading);
+  const send = useRequestStore((s) => s.send);
+  const setHistoryOpen = useRequestStore((s) => s.setHistoryOpen);
+  const newRequest = useRequestStore((s) => s.newRequest);
 
-export function CommandPalette({ open, onOpenChange, commands }: Props) {
+  useHotkey("Mod+Shift+P", toggle);
+
+  const commands: PaletteCommand[] = [
+    {
+      id: "send",
+      label: "Send request",
+      shortcut: "⌘↵",
+      disabled: !url || loading,
+      run: send,
+    },
+    {
+      id: "search-history",
+      label: "Search history…",
+      shortcut: "⌘P",
+      run: () => setHistoryOpen(true),
+    },
+    {
+      id: "new-request",
+      label: "New request",
+      run: newRequest,
+    },
+  ];
+
   return (
     <CommandDialog
       description="Run a command"
-      onOpenChange={onOpenChange}
+      onOpenChange={setOpen}
       open={open}
       title="Commands"
     >
@@ -41,7 +70,7 @@ export function CommandPalette({ open, onOpenChange, commands }: Props) {
                 disabled={cmd.disabled}
                 key={cmd.id}
                 onSelect={() => {
-                  onOpenChange(false);
+                  setOpen(false);
                   cmd.run();
                 }}
                 value={cmd.label}

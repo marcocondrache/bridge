@@ -1,18 +1,12 @@
 import { HeaderTable } from "@/components/header-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  contentType,
-  formatBytes,
-  type HttpResponse,
-  parseCookies,
-} from "@/lib/http";
+import { contentType, formatBytes, parseCookies } from "@/lib/http";
+import { useRequestStore } from "@/lib/store";
 
-interface Props {
-  error: string | null;
-  response: HttpResponse | null;
-}
+export function ResponsePanel() {
+  const response = useRequestStore((s) => s.response);
+  const error = useRequestStore((s) => s.error);
 
-export function ResponsePanel({ response, error }: Props) {
   return (
     <div className="flex h-full flex-col rounded-md border border-border">
       {error && (
