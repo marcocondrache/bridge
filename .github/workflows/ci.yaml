@@ -67,7 +67,7 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all --check
       - name: Check for typos
-        uses: crate-ci/typos@bee27e3a4fd1ea2111cf90ab89cd076c870fce14 # master
+        uses: crate-ci/typos@bc212b92c93b7d2c8acb5fcb114250694513595b # master
 
   clippy:
     needs: orchestrator
